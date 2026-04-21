@@ -1,94 +1,121 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>SolutionBase</title>
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
-body {
-  margin: 0;
-  font-family: Arial, sans-serif;
-  background: #0f172a;
-  color: #e2e8f0;
+:root {
+  --bg: #0b1220;
+  --card: #121a2b;
+  --accent: #4f9cff;
+  --text: #e6edf3;
+  --muted: #94a3b8;
 }
 
+body {
+  margin: 0;
+  font-family: Inter, system-ui, sans-serif;
+  background: var(--bg);
+  color: var(--text);
+}
+
+/* HEADER */
 header {
   padding: 20px 40px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  background: #020617;
+  background: #070d18;
+  border-bottom: 1px solid #1e293b;
 }
 
 header h1 {
   margin: 0;
-  font-size: 20px;
+  font-size: 18px;
 }
 
+/* HERO */
 .hero {
-  padding: 80px 40px;
+  padding: 60px 20px;
   text-align: center;
 }
 
 .hero h2 {
-  font-size: 40px;
+  font-size: 36px;
   margin-bottom: 10px;
 }
 
 .hero p {
-  color: #94a3b8;
+  color: var(--muted);
 }
 
-.search {
-  margin-top: 30px;
+/* SEARCH + FILTER */
+.controls {
+  margin-top: 25px;
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  flex-wrap: wrap;
 }
 
-.search input {
-  padding: 12px;
-  width: 300px;
+input, select {
+  padding: 10px 12px;
   border-radius: 8px;
   border: none;
+  background: #020617;
+  color: white;
 }
 
+/* GRID */
 .container {
   padding: 40px;
+  max-width: 1100px;
+  margin: auto;
 }
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
   gap: 20px;
 }
 
+/* CARD */
 .card {
-  background: #020617;
-  padding: 20px;
-  border-radius: 12px;
-  transition: 0.3s;
-  cursor: pointer;
+  background: var(--card);
+  padding: 18px;
+  border-radius: 14px;
+  transition: 0.2s;
+  border: 1px solid transparent;
 }
 
 .card:hover {
-  transform: translateY(-5px);
-  background: #1e293b;
+  transform: translateY(-6px);
+  border: 1px solid var(--accent);
 }
 
 .tag {
   font-size: 12px;
-  color: #38bdf8;
+  color: var(--accent);
 }
 
 .title {
   font-size: 18px;
-  margin: 10px 0;
+  margin: 8px 0;
 }
 
 .desc {
-  color: #94a3b8;
   font-size: 14px;
+  color: var(--muted);
 }
 
+.meta {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #64748b;
+}
+
+/* FOOTER */
 footer {
   text-align: center;
   padding: 30px;
@@ -105,43 +132,98 @@ footer {
 </header>
 
 <section class="hero">
-  <h2>Ready-to-use automation solutions</h2>
-  <p>Download, implement, and solve real problems fast.</p>
+  <h2>Find ready-to-use solutions</h2>
+  <p>Real automation. Real results. No fluff.</p>
 
-  <div class="search">
-    <input type="text" placeholder="Search solutions...">
+  <div class="controls">
+    <input type="text" id="search" placeholder="Search solutions..." />
+    
+    <select id="toolFilter">
+      <option value="">All Tools</option>
+      <option>Power Apps</option>
+      <option>Power Automate</option>
+      <option>PowerShell</option>
+    </select>
+
+    <select id="difficultyFilter">
+      <option value="">All Levels</option>
+      <option>Beginner</option>
+      <option>Intermediate</option>
+      <option>Advanced</option>
+    </select>
   </div>
 </section>
 
 <section class="container">
-  <h2>Featured Solutions</h2>
-
-  <div class="grid">
-
-    <div class="card">
-      <div class="tag">Power Apps</div>
-      <div class="title">Employee Onboarding</div>
-      <div class="desc">Automate onboarding with approvals, emails, and tasks.</div>
-    </div>
-
-    <div class="card">
-      <div class="tag">Power Automate</div>
-      <div class="title">Invoice Approval Flow</div>
-      <div class="desc">Automated approval workflow with notifications.</div>
-    </div>
-
-    <div class="card">
-      <div class="tag">PowerShell</div>
-      <div class="title">User Provisioning Script</div>
-      <div class="desc">Create and configure users automatically.</div>
-    </div>
-
-  </div>
+  <div class="grid" id="grid"></div>
 </section>
 
 <footer>
   © 2026 SolutionBase
 </footer>
+
+<script>
+const solutions = [
+  {
+    title: "Employee Onboarding",
+    desc: "Automate onboarding with approvals, emails and tasks.",
+    tool: "Power Apps",
+    difficulty: "Intermediate",
+    time: "30 min"
+  },
+  {
+    title: "Invoice Approval Flow",
+    desc: "Approval workflow with notifications and tracking.",
+    tool: "Power Automate",
+    difficulty: "Beginner",
+    time: "15 min"
+  },
+  {
+    title: "User Provisioning Script",
+    desc: "Create and configure users automatically.",
+    tool: "PowerShell",
+    difficulty: "Advanced",
+    time: "45 min"
+  }
+];
+
+const grid = document.getElementById("grid");
+
+function render(list) {
+  grid.innerHTML = "";
+  list.forEach(s => {
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <div class="tag">${s.tool}</div>
+      <div class="title">${s.title}</div>
+      <div class="desc">${s.desc}</div>
+      <div class="meta">${s.difficulty} • ${s.time}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function filter() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const tool = document.getElementById("toolFilter").value;
+  const diff = document.getElementById("difficultyFilter").value;
+
+  const filtered = solutions.filter(s =>
+    s.title.toLowerCase().includes(search) &&
+    (tool === "" || s.tool === tool) &&
+    (diff === "" || s.difficulty === diff)
+  );
+
+  render(filtered);
+}
+
+document.getElementById("search").addEventListener("input", filter);
+document.getElementById("toolFilter").addEventListener("change", filter);
+document.getElementById("difficultyFilter").addEventListener("change", filter);
+
+render(solutions);
+</script>
 
 </body>
 </html>
