@@ -1,0 +1,13 @@
+# SolutionBase — GitHub Pages Site
+# No Jekyll configuration needed for pure HTML/CSS/JS
+# This file tells GitHub Pages to serve the site as-is
+
+plugins:
+  - jekyll-relative-links
+
+relative_links:
+  enabled: true
+  collections: true
+
+include:
+  - README.md
