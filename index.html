@@ -1,97 +1,120 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SolutionBase</title>
 
 <style>
 :root {
-  --bg: #0b1220;
-  --card: #121a2b;
-  --accent: #4f9cff;
-  --text: #e6edf3;
+  --bg: #0b0f19;
+  --sidebar: #0f1629;
+  --card: #151c32;
+  --border: #1e293b;
+  --text: #e5e7eb;
   --muted: #94a3b8;
+  --accent: #4f9cff;
 }
+
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
   font-family: Inter, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+  display: flex;
 }
 
-/* HEADER */
-header {
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: var(--sidebar);
+  height: 100vh;
+  padding: 20px;
+  border-right: 1px solid var(--border);
+}
+
+.logo {
+  font-size: 18px;
+  font-weight: bold;
+  margin-bottom: 30px;
+}
+
+.nav a {
+  display: block;
+  padding: 10px;
+  color: var(--muted);
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.nav a:hover {
+  background: var(--card);
+  color: white;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
   padding: 20px 40px;
+}
+
+/* TOPBAR */
+.topbar {
   display: flex;
   justify-content: space-between;
-  background: #070d18;
-  border-bottom: 1px solid #1e293b;
+  margin-bottom: 30px;
 }
 
-header h1 {
-  margin: 0;
-  font-size: 18px;
+.search {
+  width: 300px;
 }
 
-/* HERO */
-.hero {
-  padding: 60px 20px;
-  text-align: center;
-}
-
-.hero h2 {
-  font-size: 36px;
-  margin-bottom: 10px;
-}
-
-.hero p {
-  color: var(--muted);
-}
-
-/* SEARCH + FILTER */
-.controls {
-  margin-top: 25px;
-  display: flex;
-  gap: 10px;
-  justify-content: center;
-  flex-wrap: wrap;
-}
-
-input, select {
-  padding: 10px 12px;
+.search input {
+  width: 100%;
+  padding: 10px;
   border-radius: 8px;
   border: none;
   background: #020617;
   color: white;
 }
 
-/* GRID */
-.container {
-  padding: 40px;
-  max-width: 1100px;
-  margin: auto;
+/* FILTERS */
+.filters {
+  display: flex;
+  gap: 10px;
 }
 
+select {
+  padding: 8px;
+  border-radius: 8px;
+  background: #020617;
+  color: white;
+  border: none;
+}
+
+/* GRID */
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
   gap: 20px;
 }
 
 /* CARD */
 .card {
   background: var(--card);
-  padding: 18px;
   border-radius: 14px;
+  padding: 18px;
+  border: 1px solid var(--border);
   transition: 0.2s;
-  border: 1px solid transparent;
+  cursor: pointer;
 }
 
 .card:hover {
   transform: translateY(-6px);
-  border: 1px solid var(--accent);
+  border-color: var(--accent);
 }
 
 .tag {
@@ -114,73 +137,70 @@ input, select {
   font-size: 12px;
   color: #64748b;
 }
-
-/* FOOTER */
-footer {
-  text-align: center;
-  padding: 30px;
-  color: #64748b;
-}
 </style>
 </head>
 
 <body>
 
-<header>
-  <h1>SolutionBase</h1>
-  <span>Power Platform Solutions</span>
-</header>
-
-<section class="hero">
-  <h2>Find ready-to-use solutions</h2>
-  <p>Real automation. Real results. No fluff.</p>
-
-  <div class="controls">
-    <input type="text" id="search" placeholder="Search solutions..." />
-    
-    <select id="toolFilter">
-      <option value="">All Tools</option>
-      <option>Power Apps</option>
-      <option>Power Automate</option>
-      <option>PowerShell</option>
-    </select>
-
-    <select id="difficultyFilter">
-      <option value="">All Levels</option>
-      <option>Beginner</option>
-      <option>Intermediate</option>
-      <option>Advanced</option>
-    </select>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">SolutionBase</div>
+  <div class="nav">
+    <a href="#">All Solutions</a>
+    <a href="#">Power Apps</a>
+    <a href="#">Power Automate</a>
+    <a href="#">PowerShell</a>
   </div>
-</section>
+</div>
 
-<section class="container">
+<!-- MAIN -->
+<div class="main">
+
+  <div class="topbar">
+    <div class="search">
+      <input type="text" id="search" placeholder="Search solutions...">
+    </div>
+
+    <div class="filters">
+      <select id="toolFilter">
+        <option value="">All Tools</option>
+        <option>Power Apps</option>
+        <option>Power Automate</option>
+        <option>PowerShell</option>
+      </select>
+
+      <select id="difficultyFilter">
+        <option value="">All Levels</option>
+        <option>Beginner</option>
+        <option>Intermediate</option>
+        <option>Advanced</option>
+      </select>
+    </div>
+  </div>
+
   <div class="grid" id="grid"></div>
-</section>
 
-<footer>
-  © 2026 SolutionBase
-</footer>
+</div>
 
 <script>
 const solutions = [
   {
     title: "Employee Onboarding",
-    desc: "Automate onboarding with approvals, emails and tasks.",
+    desc: "Automate onboarding with approvals and notifications.",
     tool: "Power Apps",
     difficulty: "Intermediate",
     time: "30 min"
   },
   {
     title: "Invoice Approval Flow",
-    desc: "Approval workflow with notifications and tracking.",
+    desc: "Approval system with tracking and alerts.",
     tool: "Power Automate",
     difficulty: "Beginner",
     time: "15 min"
   },
   {
     title: "User Provisioning Script",
-    desc: "Create and configure users automatically.",
+    desc: "Automated user creation and configuration.",
     tool: "PowerShell",
     difficulty: "Advanced",
     time: "45 min"
