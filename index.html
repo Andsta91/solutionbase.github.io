@@ -1,396 +1,147 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <meta name="description" content="SolutionBase — A curated library of production-ready, end-to-end solutions for Microsoft Power Platform, SharePoint, Power Automate, and PowerShell." />
-  <meta name="keywords" content="Power Platform, Power Apps, Power Automate, SharePoint, PowerShell, SPFx, Microsoft 365" />
-  <meta property="og:title" content="SolutionBase — Power Platform Solution Library" />
-  <meta property="og:description" content="Real-world, end-to-end solutions for Microsoft Power Platform." />
-  <meta property="og:type" content="website" />
-  <title>SolutionBase — Power Platform Solution Library</title>
-  <link rel="stylesheet" href="css/main.css" />
-  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230078d4'/><text y='23' x='5' font-size='20'>⚡</text></svg>" />
+<meta charset="UTF-8">
+<title>SolutionBase</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<style>
+body {
+  margin: 0;
+  font-family: Arial, sans-serif;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+
+header {
+  padding: 20px 40px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #020617;
+}
+
+header h1 {
+  margin: 0;
+  font-size: 20px;
+}
+
+.hero {
+  padding: 80px 40px;
+  text-align: center;
+}
+
+.hero h2 {
+  font-size: 40px;
+  margin-bottom: 10px;
+}
+
+.hero p {
+  color: #94a3b8;
+}
+
+.search {
+  margin-top: 30px;
+}
+
+.search input {
+  padding: 12px;
+  width: 300px;
+  border-radius: 8px;
+  border: none;
+}
+
+.container {
+  padding: 40px;
+}
+
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 20px;
+}
+
+.card {
+  background: #020617;
+  padding: 20px;
+  border-radius: 12px;
+  transition: 0.3s;
+  cursor: pointer;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  background: #1e293b;
+}
+
+.tag {
+  font-size: 12px;
+  color: #38bdf8;
+}
+
+.title {
+  font-size: 18px;
+  margin: 10px 0;
+}
+
+.desc {
+  color: #94a3b8;
+  font-size: 14px;
+}
+
+footer {
+  text-align: center;
+  padding: 30px;
+  color: #64748b;
+}
+</style>
 </head>
+
 <body>
 
-  <!-- ── Navigation ── -->
-  <nav class="nav" id="main-nav">
-    <div class="nav-inner">
-      <a class="nav-logo" onclick="navigate('home')" style="cursor:pointer">
-        <div class="logo-mark">SB</div>
-        SolutionBase
-      </a>
-      <div class="nav-links">
-        <a class="nav-link" data-nav="home" onclick="navigate('home')" style="cursor:pointer">Home</a>
-        <a class="nav-link" data-nav="solutions" onclick="navigate('solutions')" style="cursor:pointer">Solutions</a>
-        <a class="nav-link" data-nav="about" onclick="navigate('about')" style="cursor:pointer">About</a>
-        <a class="nav-link" href="https://github.com/solutionbase" target="_blank" rel="noopener">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="vertical-align:middle; margin-right:4px"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-          GitHub
-        </a>
-        <a class="nav-cta" onclick="navigate('solutions')" style="cursor:pointer">
-          Browse Solutions
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-        </a>
-      </div>
-      <button class="nav-hamburger" aria-label="Toggle menu">
-        <span></span><span></span><span></span>
-      </button>
-    </div>
-  </nav>
+<header>
+  <h1>SolutionBase</h1>
+  <span>Power Platform Solutions</span>
+</header>
 
-  <!-- ═══════════════════════════════════════
-       PAGE: HOME
-  ════════════════════════════════════════ -->
-  <div id="page-home" class="page">
+<section class="hero">
+  <h2>Ready-to-use automation solutions</h2>
+  <p>Download, implement, and solve real problems fast.</p>
 
-    <!-- Hero -->
-    <section class="hero">
-      <div class="hero-inner">
-
-        <div class="hero-badge">
-          <span class="badge-dot"></span>
-          Open Source · Community Driven · Production Ready
-        </div>
-
-        <h1 class="hero-title">
-          Real solutions for<br>
-          <span class="gradient-text">Microsoft Power Platform</span>
-        </h1>
-
-        <p class="hero-subtitle">
-          SolutionBase is a curated library of end-to-end, deployable solutions for Power Apps, Power Automate, SharePoint, SPFx web parts, and PowerShell. Skip the prototype — ship production code.
-        </p>
-
-        <div class="hero-actions">
-          <button class="btn-primary" onclick="navigate('solutions')">
-            Browse Solutions
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </button>
-          <a class="btn-secondary" href="https://github.com/solutionbase" target="_blank" rel="noopener">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-            View on GitHub
-          </a>
-        </div>
-
-        <div class="hero-stats">
-          <div>
-            <div class="hero-stat-value" id="stat-solutions">8</div>
-            <div class="hero-stat-label">Solutions</div>
-          </div>
-          <div>
-            <div class="hero-stat-value">16k+</div>
-            <div class="hero-stat-label">Downloads</div>
-          </div>
-          <div>
-            <div class="hero-stat-value">2.5k+</div>
-            <div class="hero-stat-label">GitHub Stars</div>
-          </div>
-          <div>
-            <div class="hero-stat-value">5</div>
-            <div class="hero-stat-label">Categories</div>
-          </div>
-        </div>
-
-      </div>
-    </section>
-
-    <!-- Categories -->
-    <section class="categories-section">
-      <div class="section-inner">
-        <div class="section-header">
-          <div>
-            <div class="section-label">Browse by Category</div>
-            <h2 class="section-title">What are you building?</h2>
-          </div>
-        </div>
-        <div class="categories-grid">
-          <div class="category-card" onclick="navigate('solutions', {category:'Power Apps'})">
-            <div class="category-icon-wrap" style="background:rgba(0,120,212,0.1); color:#0078d4">📱</div>
-            <div class="category-name">Power Apps</div>
-            <div class="category-count"><span data-cat-count="Power Apps">0</span> solutions</div>
-          </div>
-          <div class="category-card" onclick="navigate('solutions', {category:'Power Automate'})">
-            <div class="category-icon-wrap" style="background:rgba(0,102,184,0.1); color:#0066b8">⚡</div>
-            <div class="category-name">Power Automate</div>
-            <div class="category-count"><span data-cat-count="Power Automate">0</span> solutions</div>
-          </div>
-          <div class="category-card" onclick="navigate('solutions', {category:'SharePoint'})">
-            <div class="category-icon-wrap" style="background:rgba(3,131,135,0.1); color:#038387">🏢</div>
-            <div class="category-name">SharePoint</div>
-            <div class="category-count"><span data-cat-count="SharePoint">0</span> solutions</div>
-          </div>
-          <div class="category-card" onclick="navigate('solutions', {category:'SharePoint Webparts'})">
-            <div class="category-icon-wrap" style="background:rgba(202,80,16,0.1); color:#ca5010">🧩</div>
-            <div class="category-name">SharePoint Webparts</div>
-            <div class="category-count"><span data-cat-count="SharePoint Webparts">0</span> solutions</div>
-          </div>
-          <div class="category-card" onclick="navigate('solutions', {category:'PowerShell'})">
-            <div class="category-icon-wrap" style="background:rgba(92,45,145,0.1); color:#5c2d91">💻</div>
-            <div class="category-name">PowerShell</div>
-            <div class="category-count"><span data-cat-count="PowerShell">0</span> solutions</div>
-          </div>
-          <div class="category-card" onclick="navigate('solutions')">
-            <div class="category-icon-wrap" style="background:rgba(77,157,224,0.1); color:#4d9de0">🗂️</div>
-            <div class="category-name">All Solutions</div>
-            <div class="category-count"><span data-cat-count="All">0</span> total</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <!-- Featured Solutions -->
-    <section class="featured-section">
-      <div class="section-inner">
-        <div class="section-header">
-          <div>
-            <div class="section-label">Hand-Picked</div>
-            <h2 class="section-title">Featured Solutions</h2>
-          </div>
-          <a class="section-link" onclick="navigate('solutions')" style="cursor:pointer">
-            View all solutions
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </a>
-        </div>
-        <div class="solutions-grid" id="featured-grid">
-          <!-- Rendered by JS -->
-        </div>
-      </div>
-    </section>
-
-    <!-- Call to Action -->
-    <section style="padding:var(--space-9) 0; background:var(--bg-base); border-top:1px solid var(--border-subtle)">
-      <div class="section-inner" style="text-align:center">
-        <div class="section-label" style="justify-content:center; display:block">Open Source</div>
-        <h2 style="font-family:var(--font-display); font-size:clamp(1.5rem,3vw,2.25rem); font-weight:800; letter-spacing:-0.03em; margin-bottom:var(--space-3)">
-          Contribute a solution
-        </h2>
-        <p style="color:var(--text-secondary); font-size:0.95rem; max-width:520px; margin:0 auto var(--space-6); line-height:1.7">
-          Have a Power Platform solution that saved you time? Package it up and submit a pull request. Help the community skip the build and get straight to deploying.
-        </p>
-        <div style="display:flex; gap:var(--space-3); justify-content:center; flex-wrap:wrap">
-          <a href="https://github.com/solutionbase/contributing" target="_blank" rel="noopener" class="btn-primary">
-            Contribute on GitHub
-          </a>
-          <a href="https://github.com/solutionbase/issues" target="_blank" rel="noopener" class="btn-secondary">
-            Request a Solution
-          </a>
-        </div>
-      </div>
-    </section>
-
-    <!-- Footer -->
-    <footer class="footer">
-      <div class="footer-inner">
-        <div class="footer-top">
-          <div class="footer-brand">
-            <div class="nav-logo" style="margin-bottom:var(--space-3)">
-              <div class="logo-mark">SB</div>
-              SolutionBase
-            </div>
-            <p>A community-driven library of production-ready, end-to-end Microsoft Power Platform solutions. Free and open source.</p>
-          </div>
-          <div>
-            <div class="footer-col-title">Solutions</div>
-            <div class="footer-links">
-              <span class="footer-link" onclick="navigate('solutions', {category:'Power Apps'})">Power Apps</span>
-              <span class="footer-link" onclick="navigate('solutions', {category:'Power Automate'})">Power Automate</span>
-              <span class="footer-link" onclick="navigate('solutions', {category:'SharePoint'})">SharePoint</span>
-              <span class="footer-link" onclick="navigate('solutions', {category:'SharePoint Webparts'})">SPFx Webparts</span>
-              <span class="footer-link" onclick="navigate('solutions', {category:'PowerShell'})">PowerShell</span>
-            </div>
-          </div>
-          <div>
-            <div class="footer-col-title">Community</div>
-            <div class="footer-links">
-              <a class="footer-link" href="https://github.com/solutionbase" target="_blank">GitHub</a>
-              <a class="footer-link" href="https://github.com/solutionbase/discussions" target="_blank">Discussions</a>
-              <a class="footer-link" href="https://github.com/solutionbase/contributing" target="_blank">Contributing</a>
-              <a class="footer-link" href="https://github.com/solutionbase/issues" target="_blank">Report Issue</a>
-            </div>
-          </div>
-          <div>
-            <div class="footer-col-title">Site</div>
-            <div class="footer-links">
-              <span class="footer-link" onclick="navigate('home')">Home</span>
-              <span class="footer-link" onclick="navigate('solutions')">Browse</span>
-              <span class="footer-link" onclick="navigate('about')">About</span>
-            </div>
-          </div>
-        </div>
-        <div class="footer-bottom">
-          <div class="footer-copy">© 2025 SolutionBase. MIT License. Hosted on GitHub Pages.</div>
-          <div class="footer-bottom-links">
-            <a class="footer-bottom-link" href="https://github.com/solutionbase/LICENSE" target="_blank">MIT License</a>
-            <a class="footer-bottom-link" href="https://github.com/solutionbase" target="_blank">GitHub</a>
-          </div>
-        </div>
-      </div>
-    </footer>
-
-  </div><!-- /page-home -->
-
-  <!-- ═══════════════════════════════════════
-       PAGE: SOLUTIONS LISTING
-  ════════════════════════════════════════ -->
-  <div id="page-solutions" class="page">
-    <div class="listing-page">
-
-      <div class="listing-header">
-        <div class="listing-header-inner">
-          <h1 class="listing-title">Solution Library</h1>
-          <p class="listing-subtitle">Browse, filter, and find production-ready Power Platform solutions.</p>
-
-          <!-- Search -->
-          <div class="search-bar-wrap">
-            <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
-            <input type="text" class="search-bar" id="search-input" placeholder="Search solutions, tags, categories..." autocomplete="off" />
-            <button class="search-clear" id="search-clear" aria-label="Clear search">✕</button>
-          </div>
-
-          <!-- Filters -->
-          <div class="filters-bar">
-            <div class="filter-group">
-              <span class="filter-label">Category</span>
-              <button class="filter-btn active" data-filter-category="All">All</button>
-              <button class="filter-btn" data-filter-category="Power Apps">Power Apps</button>
-              <button class="filter-btn" data-filter-category="Power Automate">Power Automate</button>
-              <button class="filter-btn" data-filter-category="SharePoint">SharePoint</button>
-              <button class="filter-btn" data-filter-category="SharePoint Webparts">Webparts</button>
-              <button class="filter-btn" data-filter-category="PowerShell">PowerShell</button>
-            </div>
-            <div class="filter-divider"></div>
-            <div class="filter-group">
-              <span class="filter-label">Level</span>
-              <button class="filter-btn active" data-filter-difficulty="All">All</button>
-              <button class="filter-btn" data-filter-difficulty="Beginner">Beginner</button>
-              <button class="filter-btn" data-filter-difficulty="Intermediate">Intermediate</button>
-              <button class="filter-btn" data-filter-difficulty="Advanced">Advanced</button>
-            </div>
-            <div class="filter-divider"></div>
-            <div class="filter-group">
-              <span class="filter-label">Status</span>
-              <button class="filter-btn active" data-filter-status="All">All</button>
-              <button class="filter-btn" data-filter-status="Production Ready">Production</button>
-              <button class="filter-btn" data-filter-status="Beta">Beta</button>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="listing-content">
-        <div class="listing-toolbar">
-          <div class="results-count" id="results-count"></div>
-          <select class="sort-select" id="sort-select">
-            <option value="stars">Sort: Most Stars</option>
-            <option value="downloads">Sort: Most Downloaded</option>
-            <option value="newest">Sort: Recently Updated</option>
-            <option value="title">Sort: A → Z</option>
-          </select>
-        </div>
-        <div class="solutions-grid" id="solutions-grid">
-          <!-- Rendered by JS -->
-        </div>
-      </div>
-
-      <!-- Footer (same) -->
-      <footer class="footer" style="margin-top:var(--space-9)">
-        <div class="footer-inner">
-          <div class="footer-bottom">
-            <div class="footer-copy">© 2025 SolutionBase · MIT License · GitHub Pages</div>
-            <div class="footer-bottom-links">
-              <span class="footer-bottom-link" onclick="navigate('home')">Home</span>
-              <span class="footer-bottom-link" onclick="navigate('about')">About</span>
-              <a class="footer-bottom-link" href="https://github.com/solutionbase" target="_blank">GitHub</a>
-            </div>
-          </div>
-        </div>
-      </footer>
-
-    </div>
-  </div><!-- /page-solutions -->
-
-  <!-- ═══════════════════════════════════════
-       PAGE: SOLUTION DETAIL (dynamic)
-  ════════════════════════════════════════ -->
-  <div id="page-detail" class="page">
-    <!-- Content rendered by renderSolutionDetail() -->
+  <div class="search">
+    <input type="text" placeholder="Search solutions...">
   </div>
+</section>
 
-  <!-- ═══════════════════════════════════════
-       PAGE: ABOUT
-  ════════════════════════════════════════ -->
-  <div id="page-about" class="page">
-    <div class="about-page">
+<section class="container">
+  <h2>Featured Solutions</h2>
 
-      <div class="about-hero" style="position:relative; overflow:hidden">
-        <div style="position:absolute; inset:0; background:var(--gradient-glow); opacity:0.4; pointer-events:none"></div>
-        <div class="section-inner" style="position:relative; z-index:1">
-          <div class="section-label">About the Project</div>
-          <h1 style="font-family:var(--font-display); font-size:clamp(2rem,5vw,3.5rem); font-weight:800; letter-spacing:-0.03em; margin-bottom:var(--space-4); max-width:700px">
-            Built by practitioners,<br>for practitioners
-          </h1>
-          <p style="color:var(--text-secondary); font-size:1rem; max-width:600px; line-height:1.75">
-            SolutionBase exists because building production-grade Power Platform solutions takes more than a YouTube tutorial. It takes real architecture decisions, battle-tested patterns, and working code you can actually deploy.
-          </p>
-        </div>
-      </div>
+  <div class="grid">
 
-      <div class="about-content">
-
-        <h2>The Problem</h2>
-        <p>
-          The Microsoft Power Platform ecosystem is enormous, but finding complete, deployable solutions is hard. Most resources show isolated components — a Power Automate flow here, a Canvas App there. What organizations actually need are end-to-end solutions that show how all the pieces fit together.
-        </p>
-        <p>
-          SolutionBase bridges that gap. Every solution in the library is a complete, documented, downloadable package that solves a real business problem from start to finish.
-        </p>
-
-        <h2>What We Include</h2>
-        <p>
-          Solutions span the full Microsoft 365 and Power Platform stack: Canvas Apps and Model-Driven Apps in Power Apps, automated flows in Power Automate, SPFx web parts for SharePoint, PowerShell scripts using PnP and Graph, Teams integrations, Dataverse schemas, and more.
-        </p>
-        <p>
-          Every solution includes full documentation, a component breakdown, prerequisites, and a packaged release you can import directly into your environment.
-        </p>
-
-        <h2>Contributing</h2>
-        <p>
-          SolutionBase is 100% open source under the MIT license. If you've built something on the Power Platform that solved a real problem, package it up and submit a pull request. Contribution guidelines are on GitHub.
-        </p>
-        <p>
-          We review every submission for quality, completeness, and documentation before publishing to the library.
-        </p>
-
-        <div style="display:flex; gap:var(--space-3); margin-top:var(--space-6); flex-wrap:wrap">
-          <a href="https://github.com/solutionbase" target="_blank" rel="noopener" class="btn-primary">View on GitHub</a>
-          <button class="btn-secondary" onclick="navigate('solutions')">Browse Solutions</button>
-        </div>
-      </div>
-
-      <!-- Footer -->
-      <footer class="footer" style="margin-top:var(--space-9)">
-        <div class="footer-inner">
-          <div class="footer-bottom">
-            <div class="footer-copy">© 2025 SolutionBase · MIT License</div>
-            <div class="footer-bottom-links">
-              <span class="footer-bottom-link" onclick="navigate('home')">Home</span>
-              <span class="footer-bottom-link" onclick="navigate('solutions')">Solutions</span>
-            </div>
-          </div>
-        </div>
-      </footer>
-
+    <div class="card">
+      <div class="tag">Power Apps</div>
+      <div class="title">Employee Onboarding</div>
+      <div class="desc">Automate onboarding with approvals, emails, and tasks.</div>
     </div>
-  </div><!-- /page-about -->
 
-  <!-- Toast Container -->
-  <div id="toast-container" class="toast-container"></div>
+    <div class="card">
+      <div class="tag">Power Automate</div>
+      <div class="title">Invoice Approval Flow</div>
+      <div class="desc">Automated approval workflow with notifications.</div>
+    </div>
 
-  <!-- Scripts -->
-  <script src="js/solutions-data.js"></script>
-  <script src="js/app.js"></script>
+    <div class="card">
+      <div class="tag">PowerShell</div>
+      <div class="title">User Provisioning Script</div>
+      <div class="desc">Create and configure users automatically.</div>
+    </div>
+
+  </div>
+</section>
+
+<footer>
+  © 2026 SolutionBase
+</footer>
 
 </body>
 </html>
