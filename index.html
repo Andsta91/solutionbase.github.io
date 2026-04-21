@@ -3,210 +3,247 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Employee Onboarding | SolutionBase</title>
+<title>SolutionBase</title>
 
 <style>
 :root {
   --bg: #0b0f19;
+  --sidebar: #0f1629;
   --card: #151c32;
   --border: #1e293b;
   --text: #e5e7eb;
   --muted: #94a3b8;
   --accent: #4f9cff;
-  --success: #22c55e;
 }
+
+* { box-sizing: border-box; }
 
 body {
   margin: 0;
-  font-family: Inter, sans-serif;
+  font-family: Inter, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
+  display: flex;
 }
 
-/* CONTAINER */
-.container {
-  max-width: 900px;
-  margin: auto;
-  padding: 40px 20px;
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  background: var(--sidebar);
+  height: 100vh;
+  padding: 20px;
+  border-right: 1px solid var(--border);
 }
 
-/* HEADER */
-.header {
+.logo {
+  font-size: 18px;
+  font-weight: bold;
   margin-bottom: 30px;
 }
 
-.tag {
-  color: var(--accent);
-  font-size: 13px;
-}
-
-.title {
-  font-size: 32px;
-  margin: 10px 0;
-}
-
-.meta {
+.nav a {
+  display: block;
+  padding: 10px;
   color: var(--muted);
-  font-size: 14px;
+  text-decoration: none;
+  border-radius: 8px;
+  margin-bottom: 5px;
+}
+
+.nav a:hover {
+  background: var(--card);
+  color: white;
+}
+
+/* MAIN */
+.main {
+  flex: 1;
+  padding: 20px 40px;
+}
+
+/* TOPBAR */
+.topbar {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 30px;
+}
+
+.search {
+  width: 300px;
+}
+
+.search input {
+  width: 100%;
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+  background: #020617;
+  color: white;
+}
+
+/* FILTERS */
+.filters {
+  display: flex;
+  gap: 10px;
+}
+
+select {
+  padding: 8px;
+  border-radius: 8px;
+  background: #020617;
+  color: white;
+  border: none;
+}
+
+/* GRID */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 20px;
 }
 
 /* CARD */
 .card {
   background: var(--card);
-  border: 1px solid var(--border);
   border-radius: 14px;
-  padding: 20px;
-  margin-bottom: 20px;
-}
-
-/* BUTTONS */
-.buttons {
-  display: flex;
-  gap: 10px;
-  margin-top: 15px;
-}
-
-.btn {
-  padding: 10px 14px;
-  border-radius: 8px;
-  border: none;
+  padding: 18px;
+  border: 1px solid var(--border);
+  transition: 0.2s;
   cursor: pointer;
 }
 
-.primary {
-  background: var(--accent);
-  color: white;
+.card:hover {
+  transform: translateY(-6px);
+  border-color: var(--accent);
 }
 
-.secondary {
-  background: #020617;
-  color: white;
-  border: 1px solid var(--border);
+.tag {
+  font-size: 12px;
+  color: var(--accent);
 }
 
-/* STEPS */
-.step {
-  margin-bottom: 10px;
-  padding-left: 10px;
+.title {
+  font-size: 18px;
+  margin: 8px 0;
 }
 
-/* TROUBLESHOOT */
-.issue {
-  margin-bottom: 10px;
+.desc {
+  font-size: 14px;
+  color: var(--muted);
 }
 
-.issue strong {
-  color: #f87171;
-}
-
-.issue span {
-  color: var(--success);
-}
-
-/* COMMENTS */
-.comment-box textarea {
-  width: 100%;
-  padding: 10px;
-  border-radius: 8px;
-  background: #020617;
-  color: white;
-  border: none;
+.meta {
+  margin-top: 10px;
+  font-size: 12px;
+  color: #64748b;
 }
 </style>
 </head>
 
 <body>
 
-<div class="container">
-
-  <!-- HEADER -->
-  <div class="header">
-    <div class="tag">Power Apps • Intermediate • 30 min</div>
-    <div class="title">Employee Onboarding Automation</div>
-    <div class="meta">Last tested: April 2026</div>
+<!-- SIDEBAR -->
+<div class="sidebar">
+  <div class="logo">SolutionBase</div>
+  <div class="nav">
+    <a href="#">All Solutions</a>
+    <a href="#">Power Apps</a>
+    <a href="#">Power Automate</a>
+    <a href="#">PowerShell</a>
   </div>
+</div>
 
-  <!-- PROBLEM -->
-  <div class="card">
-    <h3>Problem</h3>
-    <p>Manual onboarding processes are slow, inconsistent, and require multiple approvals across teams.</p>
-  </div>
+<!-- MAIN -->
+<div class="main">
 
-  <!-- RESULT -->
-  <div class="card">
-    <h3>What You Get</h3>
-    <p>A fully automated onboarding system with approvals, notifications, and task tracking.</p>
-  </div>
+  <div class="topbar">
+    <div class="search">
+      <input type="text" id="search" placeholder="Search solutions...">
+    </div>
 
-  <!-- DOWNLOAD -->
-  <div class="card">
-    <h3>Get the Solution</h3>
-    <p>Download the full package and import it into your environment.</p>
+    <div class="filters">
+      <select id="toolFilter">
+        <option value="">All Tools</option>
+        <option>Power Apps</option>
+        <option>Power Automate</option>
+        <option>PowerShell</option>
+      </select>
 
-    <div class="buttons">
-      <button class="btn primary">Download Package</button>
-      <button class="btn secondary">View on GitHub</button>
+      <select id="difficultyFilter">
+        <option value="">All Levels</option>
+        <option>Beginner</option>
+        <option>Intermediate</option>
+        <option>Advanced</option>
+      </select>
     </div>
   </div>
 
-  <!-- REQUIREMENTS -->
-  <div class="card">
-    <h3>Requirements</h3>
-    <ul>
-      <li>Power Apps environment</li>
-      <li>Power Automate access</li>
-      <li>Admin permissions</li>
-    </ul>
-  </div>
-
-  <!-- SETUP -->
-  <div class="card">
-    <h3>Setup Steps</h3>
-
-    <div class="step">1. Import solution package</div>
-    <div class="step">2. Configure connectors</div>
-    <div class="step">3. Update email templates</div>
-    <div class="step">4. Assign user permissions</div>
-
-  </div>
-
-  <!-- TROUBLESHOOT -->
-  <div class="card">
-    <h3>Troubleshooting</h3>
-
-    <div class="issue">
-      <strong>Error:</strong> Flow not triggering  
-      <br><span>Fix:</span> Check trigger permissions and connections
-    </div>
-
-    <div class="issue">
-      <strong>Error:</strong> Emails not sending  
-      <br><span>Fix:</span> Verify Outlook connector
-    </div>
-
-  </div>
-
-  <!-- VARIATIONS -->
-  <div class="card">
-    <h3>Variations</h3>
-    <p>Add Teams notifications or integrate with HR systems.</p>
-  </div>
-
-  <!-- FEEDBACK -->
-  <div class="card">
-    <h3>Feedback</h3>
-
-    <div class="buttons">
-      <button class="btn secondary">👍 Worked</button>
-      <button class="btn secondary">⚠ Needs Update</button>
-    </div>
-
-    <div class="comment-box" style="margin-top:15px;">
-      <textarea rows="3" placeholder="Share your experience..."></textarea>
-    </div>
-  </div>
+  <div class="grid" id="grid"></div>
 
 </div>
+
+<script>
+const solutions = [
+  {
+    title: "Employee Onboarding",
+    desc: "Automate onboarding with approvals and notifications.",
+    tool: "Power Apps",
+    difficulty: "Intermediate",
+    time: "30 min"
+  },
+  {
+    title: "Invoice Approval Flow",
+    desc: "Approval system with tracking and alerts.",
+    tool: "Power Automate",
+    difficulty: "Beginner",
+    time: "15 min"
+  },
+  {
+    title: "User Provisioning Script",
+    desc: "Automated user creation and configuration.",
+    tool: "PowerShell",
+    difficulty: "Advanced",
+    time: "45 min"
+  }
+];
+
+const grid = document.getElementById("grid");
+
+function render(list) {
+  grid.innerHTML = "";
+  list.forEach(s => {
+    const el = document.createElement("div");
+    el.className = "card";
+    el.innerHTML = `
+      <div class="tag">${s.tool}</div>
+      <div class="title">${s.title}</div>
+      <div class="desc">${s.desc}</div>
+      <div class="meta">${s.difficulty} • ${s.time}</div>
+    `;
+    grid.appendChild(el);
+  });
+}
+
+function filter() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const tool = document.getElementById("toolFilter").value;
+  const diff = document.getElementById("difficultyFilter").value;
+
+  const filtered = solutions.filter(s =>
+    s.title.toLowerCase().includes(search) &&
+    (tool === "" || s.tool === tool) &&
+    (diff === "" || s.difficulty === diff)
+  );
+
+  render(filtered);
+}
+
+document.getElementById("search").addEventListener("input", filter);
+document.getElementById("toolFilter").addEventListener("change", filter);
+document.getElementById("difficultyFilter").addEventListener("change", filter);
+
+render(solutions);
+</script>
 
 </body>
 </html>
