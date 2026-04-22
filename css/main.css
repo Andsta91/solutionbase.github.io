@@ -1,15 +1,15 @@
-/* DEFAULT = LIGHT MODE */
+/* ========== THEME ========== */
 :root {
   --bg: #ffffff;
   --sidebar: #f8fafc;
   --card: #ffffff;
-  --border: #e2e8f0;
+  --border: #e5e7eb;
   --text: #0f172a;
   --muted: #64748b;
-  --accent: #7c3aed; /* purple */
+  --accent: #7c3aed;
+  --radius: 12px;
 }
 
-/* DARK MODE */
 body.dark {
   --bg: #0b0f19;
   --sidebar: #0f1629;
@@ -20,81 +20,142 @@ body.dark {
   --accent: #4f9cff;
 }
 
-/* RESET */
+/* ========== BASE ========== */
 body {
   margin: 0;
-  font-family: Inter, sans-serif;
+  font-family: Inter, system-ui, sans-serif;
   background: var(--bg);
   color: var(--text);
 }
 
-/* SIDEBAR FIXED */
+/* ========== SIDEBAR ========== */
 .sidebar {
   position: fixed;
-  left: 0;
-  top: 0;
   width: 240px;
   height: 100vh;
+  padding: 24px;
   background: var(--sidebar);
   border-right: 1px solid var(--border);
-  padding: 20px;
 }
 
-/* MAIN AREA */
-.main {
-  margin-left: 240px; /* IMPORTANT */
-  padding: 20px 40px;
+.logo {
+  font-weight: 600;
+  margin-bottom: 30px;
 }
 
-/* NAV */
 .nav a {
   display: block;
   padding: 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
   color: var(--muted);
   text-decoration: none;
-  border-radius: 8px;
+  transition: 0.2s;
 }
 
 .nav a:hover {
   background: var(--card);
   color: var(--text);
-  border-left: 3px solid var(--accent);
+  padding-left: 14px;
 }
 
-/* TOPBAR */
+/* ========== MAIN ========== */
+.main {
+  margin-left: 240px;
+  padding: 30px 40px;
+}
+
+/* ========== TOPBAR ========== */
 .topbar {
   display: flex;
   justify-content: space-between;
-  margin-bottom: 20px;
+  align-items: center;
+  margin-bottom: 30px;
 }
 
-/* INPUTS */
+.controls {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
 input, select {
   background: var(--card);
-  color: var(--text);
   border: 1px solid var(--border);
-  padding: 8px;
+  color: var(--text);
+  padding: 10px;
   border-radius: 8px;
 }
 
-/* GRID */
+/* ========== BUTTON ========== */
+#themeToggle {
+  border: 1px solid var(--border);
+  background: var(--card);
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+/* ========== GRID ========== */
 .grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
   gap: 20px;
 }
 
-/* CARD */
+/* ========== CARD ========== */
 .card {
   background: var(--card);
   border: 1px solid var(--border);
+  border-radius: var(--radius);
   padding: 18px;
-  border-radius: 12px;
   cursor: pointer;
-  transition: 0.2s;
+  transition: 0.25s ease;
+  position: relative;
 }
 
 .card:hover {
+  transform: translateY(-6px);
   border-color: var(--accent);
-  transform: translateY(-4px);
+  box-shadow: 0 10px 25px rgba(0,0,0,0.08);
+}
+
+.title {
+  font-weight: 600;
+  margin: 8px 0;
+}
+
+.desc {
+  font-size: 14px;
+  color: var(--muted);
+}
+
+/* ========== BADGES ========== */
+.badge {
+  display: inline-block;
+  padding: 3px 8px;
+  border-radius: 999px;
+  font-size: 11px;
+  margin-right: 5px;
+}
+
+.badge.verified {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.badge.new {
+  background: #ede9fe;
+  color: #5b21b6;
+}
+
+/* DARK badge fix */
+body.dark .badge.verified {
+  background: #14532d;
+  color: #bbf7d0;
+}
+
+body.dark .badge.new {
+  background: #312e81;
+  color: #c7d2fe;
 }
