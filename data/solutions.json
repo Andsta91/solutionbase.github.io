@@ -10,7 +10,7 @@
     "new": true
   },
 {
-  "slug": "invoice-approval-Flow",
+  "slug": "invoice-approval",
   "title": "Invoice Approval Flow",
   "description": "Approval system with tracking and alerts",
   "tool": "Power Automate",
