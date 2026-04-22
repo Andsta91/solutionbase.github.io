@@ -1,0 +1,13 @@
+[
+  {
+    "slug": "employee-onboarding",
+    "title": "Employee Onboarding",
+    "tool": "Power Apps",
+    "difficulty": "Intermediate",
+    "time": "30 min",
+    "description": "Automate onboarding with approvals and notifications.",
+    "lastTested": "April 2026",
+    "tags": ["HR", "Automation"],
+    "github": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/employee-onboarding"
+  }
+]
