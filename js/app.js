@@ -100,16 +100,19 @@ function markdownToHtml(md) {
 const toggleBtn = document.getElementById("themeToggle");
 
 // Load saved theme
-if (localStorage.getItem("theme") === "light") {
-  document.body.classList.add("light");
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+  toggleBtn.textContent = "☀️";
+} else {
+  toggleBtn.textContent = "🌙";
 }
 
 toggleBtn.addEventListener("click", () => {
-  document.body.classList.toggle("light");
+  document.body.classList.toggle("dark");
 
-  const isLight = document.body.classList.contains("light");
+  const isDark = document.body.classList.contains("dark");
 
-  localStorage.setItem("theme", isLight ? "light" : "dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
 
-  toggleBtn.textContent = isLight ? "🌙" : "☀️";
+  toggleBtn.textContent = isDark ? "☀️" : "🌙";
 });
