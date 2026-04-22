@@ -97,3 +97,19 @@ function markdownToHtml(md) {
     .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
     .replace(/\n/g, '<br>');
 }
+const toggleBtn = document.getElementById("themeToggle");
+
+// Load saved theme
+if (localStorage.getItem("theme") === "light") {
+  document.body.classList.add("light");
+}
+
+toggleBtn.addEventListener("click", () => {
+  document.body.classList.toggle("light");
+
+  const isLight = document.body.classList.contains("light");
+
+  localStorage.setItem("theme", isLight ? "light" : "dark");
+
+  toggleBtn.textContent = isLight ? "🌙" : "☀️";
+});
