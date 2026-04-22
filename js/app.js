@@ -114,3 +114,20 @@ toggleBtn.addEventListener("click", () => {
 
   toggleBtn.textContent = isDark ? "☀️" : "🌙";
 });
+
+function applyFilters() {
+  const search = document.getElementById("search").value.toLowerCase();
+  const tool = document.getElementById("toolFilter").value;
+  const difficulty = document.getElementById("difficultyFilter").value;
+
+  const filtered = solutions.filter(s =>
+    s.title.toLowerCase().includes(search) ||
+    s.description.toLowerCase().includes(search) ||
+    (s.tags && s.tags.join(" ").toLowerCase().includes(search))
+  ).filter(s =>
+    (tool === "" || s.tool === tool) &&
+    (difficulty === "" || s.difficulty === difficulty)
+  );
+
+  renderSolutions(filtered);
+}
