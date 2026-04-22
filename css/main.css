@@ -66,7 +66,7 @@ body {
 /* MAIN */
 .main {
   margin-left: 240px;
-  padding: 30px;
+  padding: 40px 60px; /* 🔥 more breathing room */
 }
 
 /* TOPBAR */
