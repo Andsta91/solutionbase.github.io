@@ -12,7 +12,10 @@
 
 <!-- SIDEBAR -->
 <div class="sidebar">
-  <div class="logo">SolutionBase</div>
+  <div class="logo">
+    <img src="./assets/logo.png" alt="logo">
+    <span>SolutionBase</span>
+  </div>
 
   <div class="nav">
     <a href="#">All Solutions</a>
@@ -22,20 +25,15 @@
   </div>
 </div>
 
-<!-- MAIN CONTENT -->
+<!-- MAIN -->
 <div class="main">
 
-  <!-- TOPBAR -->
   <div class="topbar">
-
-    <!-- LEFT: SEARCH -->
     <div class="search">
       <input type="text" id="search" placeholder="Search solutions...">
     </div>
 
-    <!-- RIGHT: FILTERS + THEME -->
     <div class="controls">
-
       <select id="toolFilter">
         <option value="">All Tools</option>
         <option>Power Apps</option>
@@ -51,17 +49,13 @@
       </select>
 
       <button id="themeToggle">🌙</button>
-
     </div>
-
   </div>
 
-  <!-- SPA RENDER TARGET -->
   <div id="app"></div>
 
 </div>
 
-<!-- JS -->
 <script src="./js/app.js"></script>
 
 </body>
