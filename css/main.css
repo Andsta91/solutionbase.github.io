@@ -1,3 +1,4 @@
+/* DARK (default) */
 :root {
   --bg: #0b0f19;
   --sidebar: #0f1629;
@@ -8,14 +9,15 @@
   --accent: #4f9cff;
 }
 
-* { box-sizing: border-box; }
-
-body {
-  margin: 0;
-  font-family: Inter, system-ui, sans-serif;
-  background: var(--bg);
-  color: var(--text);
-  display: flex;
+/* LIGHT MODE */
+body.light {
+  --bg: #ffffff;
+  --sidebar: #f8fafc;
+  --card: #ffffff;
+  --border: #e2e8f0;
+  --text: #0f172a;
+  --muted: #64748b;
+  --accent: #7c3aed; /* purple */
 }
 
 /* SIDEBAR */
