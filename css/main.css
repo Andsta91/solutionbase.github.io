@@ -169,3 +169,35 @@ input, select {
   from { opacity: 0; transform: translateY(5px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+#readme {
+  line-height: 1.6;
+}
+
+#readme h1, #readme h2, #readme h3 {
+  margin-top: 20px;
+}
+
+#readme p {
+  margin: 10px 0;
+}
+
+#readme img {
+  max-width: 100%;
+  border-radius: 10px;
+  margin: 15px 0;
+}
+
+#readme code {
+  background: #111;
+  padding: 4px 6px;
+  border-radius: 6px;
+  font-size: 13px;
+}
+
+#readme pre {
+  background: #020617;
+  padding: 15px;
+  border-radius: 10px;
+  overflow-x: auto;
+}
