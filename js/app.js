@@ -52,3 +52,31 @@ function renderSolutions(list) {
     grid.appendChild(el);
   });
 }
+
+function renderSolutionPage(slug) {
+  const solution = solutions.find(s => s.slug === slug);
+
+  if (!solution) {
+    document.getElementById("app").innerHTML = "<h2>Not found</h2>";
+    return;
+  }
+
+  document.getElementById("app").innerHTML = `
+    <div class="container">
+
+      <button onclick="window.location.hash=''">← Back</button>
+
+      <h1>${solution.title}</h1>
+      <p>${solution.description}</p>
+
+      <p><strong>Tool:</strong> ${solution.tool}</p>
+      <p><strong>Difficulty:</strong> ${solution.difficulty}</p>
+      <p><strong>Time:</strong> ${solution.time}</p>
+
+      <div id="readme">Loading content...</div>
+
+    </div>
+  `;
+
+  loadReadme(slug);
+}
