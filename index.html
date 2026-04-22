@@ -6,9 +6,9 @@
 <title>SolutionBase</title>
 <link rel="stylesheet" href="./css/main.css">
 </head>
-
+  
 <body>
-<div id="app"></div>
+
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="logo">SolutionBase</div>
@@ -23,6 +23,7 @@
 <!-- MAIN -->
 <div class="main">
 
+  <!-- TOPBAR (KEEP THIS) -->
   <div class="topbar">
     <div class="search">
       <input type="text" id="search" placeholder="Search solutions...">
@@ -45,10 +46,12 @@
     </div>
   </div>
 
-  <div class="grid" id="grid"></div>
+  <!-- 🔥 THIS is where JS renders everything -->
+  <div id="app"></div>
 
 </div>
 
+<!-- CONNECT YOUR JS -->
 <script src="./js/app.js"></script>
 
 </body>
