@@ -9,14 +9,14 @@
     "verified": true,
     "new": true
   },
-  {
-    "slug": "invoice-approval-Flow",
-    "title": "Invoice Approval Flow",
-    "description": "Approval system with tracking",
-    "tool": "Power Automate",
-    "difficulty": "Beginner",
-    "tags": ["Finance"],
-    "verified": false,
-    "new": false
-  }
+{
+  "slug": "invoice-approval-Flow",
+  "title": "Invoice Approval Flow",
+  "description": "Approval system with tracking and alerts",
+  "tool": "Power Automate",
+  "difficulty": "Beginner",
+  "tags": ["Finance"],
+  "verified": true,
+  "new": true
+}
 ]
