@@ -20,3 +20,35 @@ function router() {
 }
 
 window.addEventListener("hashchange", router);
+
+function renderSolutions(list) {
+  const app = document.getElementById("app");
+
+  app.innerHTML = `
+    <div class="container">
+      <h1>Solutions</h1>
+      <div class="grid" id="grid"></div>
+    </div>
+  `;
+
+  const grid = document.getElementById("grid");
+
+  list.forEach(s => {
+    const el = document.createElement("div");
+    el.className = "card";
+
+    el.innerHTML = `
+      <div class="tag">${s.tool}</div>
+      <div class="title">${s.title}</div>
+      <div class="desc">${s.description}</div>
+      <div class="meta">${s.difficulty} • ${s.time}</div>
+    `;
+
+    // 🔥 THIS is Step 4 (click navigation)
+    el.onclick = () => {
+      window.location.hash = `solution=${s.slug}`;
+    };
+
+    grid.appendChild(el);
+  });
+}
