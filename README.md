@@ -2,7 +2,7 @@
 
 > A modern, open-source platform for discovering, learning, and deploying real-world solutions for the Microsoft Power Platform.
 
-**[🌐 Live Site](https://solutionbase.github.io)**
+**[🌐 Live Site](https://andsta91.github.io/solutionbase.github.io/#)**
 
 ---
 
