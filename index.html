@@ -4,14 +4,16 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>SolutionBase</title>
+
 <link rel="stylesheet" href="./css/main.css">
 </head>
-  
+
 <body>
 
 <!-- SIDEBAR -->
 <div class="sidebar">
   <div class="logo">SolutionBase</div>
+
   <div class="nav">
     <a href="#">All Solutions</a>
     <a href="#">Power Apps</a>
@@ -20,16 +22,20 @@
   </div>
 </div>
 
-<!-- MAIN -->
+<!-- MAIN CONTENT -->
 <div class="main">
 
-  <!-- TOPBAR (KEEP THIS) -->
+  <!-- TOPBAR -->
   <div class="topbar">
+
+    <!-- LEFT: SEARCH -->
     <div class="search">
       <input type="text" id="search" placeholder="Search solutions...">
     </div>
-<button id="themeToggle">🌙</button>
-    <div class="filters">
+
+    <!-- RIGHT: FILTERS + THEME -->
+    <div class="controls">
+
       <select id="toolFilter">
         <option value="">All Tools</option>
         <option>Power Apps</option>
@@ -43,15 +49,19 @@
         <option>Intermediate</option>
         <option>Advanced</option>
       </select>
+
+      <button id="themeToggle">🌙</button>
+
     </div>
+
   </div>
 
-  <!-- 🔥 THIS is where JS renders everything -->
+  <!-- SPA RENDER TARGET -->
   <div id="app"></div>
 
 </div>
 
-<!-- CONNECT YOUR JS -->
+<!-- JS -->
 <script src="./js/app.js"></script>
 
 </body>
