@@ -82,7 +82,7 @@ function renderSolutionPage(slug) {
 }
 
 async function loadReadme(slug) {
-  const url = `https://github.com/Andsta91/solutionbase.github.io/main/solutions/${slug}/README.md`;
+  const url = `https://raw.githubusercontent.com/Andsta91/solutionbase.github.io/main/solutions/${slug}/README.md`;
 
   const res = await fetch(url);
   const text = await res.text();
