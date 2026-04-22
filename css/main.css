@@ -40,9 +40,8 @@ body {
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 600;
-  margin-bottom: 30px;
+  justify-content: space-between;
+  gap: 8px;
 }
 
 .logo img {
