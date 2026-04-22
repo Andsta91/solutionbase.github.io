@@ -80,3 +80,12 @@ function renderSolutionPage(slug) {
 
   loadReadme(slug);
 }
+
+async function loadReadme(slug) {
+  const url = `https://raw.githubusercontent.com/YOURUSER/YOURREPO/main/solutions/${slug}/README.md`;
+
+  const res = await fetch(url);
+  const text = await res.text();
+
+  document.getElementById("readme").innerHTML = markdownToHtml(text);
+}
