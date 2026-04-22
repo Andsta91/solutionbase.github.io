@@ -20,6 +20,15 @@ body.light {
   --accent: #7c3aed; /* purple */
 }
 
+#themeToggle {
+  background: var(--card);
+  color: var(--text);
+  border: 1px solid var(--border);
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
 /* SIDEBAR */
 .sidebar {
   width: 240px;
