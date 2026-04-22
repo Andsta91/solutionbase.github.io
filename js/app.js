@@ -131,3 +131,9 @@ function applyFilters() {
 
   renderSolutions(filtered);
 }
+
+document.getElementById("search").addEventListener("input", applyFilters);
+
+document.getElementById("toolFilter").addEventListener("change", applyFilters);
+
+document.getElementById("difficultyFilter").addEventListener("change", applyFilters);
