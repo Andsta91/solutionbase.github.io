@@ -1,13 +1,15 @@
 let solutions = [];
 
+/* LOAD DATA */
 async function loadSolutions() {
   const res = await fetch('./data/solutions.json');
   solutions = await res.json();
-  router(); // 🔥 important
+  router();
 }
 
 loadSolutions();
 
+/* ROUTER */
 function router() {
   const hash = window.location.hash;
 
@@ -21,10 +23,11 @@ function router() {
 
 window.addEventListener("hashchange", router);
 
+/* RENDER LIST */
 function renderSolutions(list) {
   const app = document.getElementById("app");
 
-  app.innerHTML = `<div class="grid" id="grid"></div>`;
+  app.innerHTML = `<div class="container"><div class="grid" id="grid"></div></div>`;
 
   const grid = document.getElementById("grid");
 
@@ -33,14 +36,11 @@ function renderSolutions(list) {
     el.className = "card";
 
     el.innerHTML = `
-      <div>
-        ${s.verified ? '<span class="badge verified">Verified</span>' : ''}
-        ${s.new ? '<span class="badge new">New</span>' : ''}
-      </div>
+      ${s.verified ? '<span class="badge verified">Verified</span>' : ''}
+      ${s.new ? '<span class="badge new">New</span>' : ''}
 
       <div class="title">${s.title}</div>
       <div class="desc">${s.description}</div>
-      <div class="meta">${s.tool} • ${s.difficulty}</div>
     `;
 
     el.onclick = () => {
@@ -51,70 +51,7 @@ function renderSolutions(list) {
   });
 }
 
-function renderSolutionPage(slug) {
-  const solution = solutions.find(s => s.slug === slug);
-
-  if (!solution) {
-    document.getElementById("app").innerHTML = "<h2>Not found</h2>";
-    return;
-  }
-
-  document.getElementById("app").innerHTML = `
-    <div class="container">
-
-      <button onclick="window.location.hash=''">← Back</button>
-
-      <h1>${solution.title}</h1>
-      <p>${solution.description}</p>
-
-      <p><strong>Tool:</strong> ${solution.tool}</p>
-      <p><strong>Difficulty:</strong> ${solution.difficulty}</p>
-      <p><strong>Time:</strong> ${solution.time}</p>
-
-      <div id="readme">Loading content...</div>
-
-    </div>
-  `;
-
-  loadReadme(slug);
-}
-
-async function loadReadme(slug) {
-  const url = `https://raw.githubusercontent.com/Andsta91/solutionbase.github.io/main/solutions/${slug}/README.md`;
-
-  const res = await fetch(url);
-  const text = await res.text();
-
-  document.getElementById("readme").innerHTML = markdownToHtml(text);
-}
-
-function markdownToHtml(md) {
-  return md
-    .replace(/^# (.*$)/gim, '<h1>$1</h1>')
-    .replace(/^## (.*$)/gim, '<h2>$1</h2>')
-    .replace(/\*\*(.*?)\*\*/gim, '<b>$1</b>')
-    .replace(/\n/g, '<br>');
-}
-const toggleBtn = document.getElementById("themeToggle");
-
-// Load saved theme
-if (localStorage.getItem("theme") === "dark") {
-  document.body.classList.add("dark");
-  toggleBtn.textContent = "☀️";
-} else {
-  toggleBtn.textContent = "🌙";
-}
-
-toggleBtn.addEventListener("click", () => {
-  document.body.classList.toggle("dark");
-
-  const isDark = document.body.classList.contains("dark");
-
-  localStorage.setItem("theme", isDark ? "dark" : "light");
-
-  toggleBtn.textContent = isDark ? "☀️" : "🌙";
-});
-
+/* FILTERS */
 function applyFilters() {
   const search = document.getElementById("search").value.toLowerCase();
   const tool = document.getElementById("toolFilter").value;
@@ -132,8 +69,56 @@ function applyFilters() {
   renderSolutions(filtered);
 }
 
+/* EVENTS */
 document.getElementById("search").addEventListener("input", applyFilters);
-
 document.getElementById("toolFilter").addEventListener("change", applyFilters);
-
 document.getElementById("difficultyFilter").addEventListener("change", applyFilters);
+
+/* SOLUTION PAGE */
+function renderSolutionPage(slug) {
+  const s = solutions.find(x => x.slug === slug);
+
+  document.getElementById("app").innerHTML = `
+    <div class="container">
+      <button onclick="window.location.hash=''">← Back</button>
+
+      <h1>${s.title}</h1>
+      <p>${s.description}</p>
+
+      ${s.package ? `<a href="${s.package}">Download</a>` : ''}
+
+      <div class="solution-content">
+        <div id="readme">Loading...</div>
+      </div>
+    </div>
+  `;
+
+  loadReadme(slug);
+}
+
+/* LOAD README */
+async function loadReadme(slug) {
+  const url = `https://raw.githubusercontent.com/Andsta91/solutionbase.github.io/main/solutions/${slug}/README.md`;
+
+  try {
+    const res = await fetch(url);
+    const text = await res.text();
+    document.getElementById("readme").innerHTML = text;
+  } catch {
+    document.getElementById("readme").innerHTML = "Failed to load content.";
+  }
+}
+
+/* THEME */
+const toggleBtn = document.getElementById("themeToggle");
+
+if (localStorage.getItem("theme") === "dark") {
+  document.body.classList.add("dark");
+}
+
+toggleBtn.addEventListener("click", () => {
+  document.body.classList.toggle("dark");
+
+  const isDark = document.body.classList.contains("dark");
+  localStorage.setItem("theme", isDark ? "dark" : "light");
+});
