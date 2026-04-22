@@ -103,7 +103,9 @@ async function loadReadme(slug) {
   try {
     const res = await fetch(url);
     const text = await res.text();
-    document.getElementById("readme").innerHTML = text;
+
+    document.getElementById("readme").innerHTML = marked.parse(text);
+
   } catch {
     document.getElementById("readme").innerHTML = "Failed to load content.";
   }
