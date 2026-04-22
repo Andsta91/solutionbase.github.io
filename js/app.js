@@ -7,3 +7,16 @@ async function loadSolutions() {
 }
 
 loadSolutions();
+
+function router() {
+  const hash = window.location.hash;
+
+  if (hash.startsWith("#solution=")) {
+    const slug = hash.replace("#solution=", "");
+    renderSolutionPage(slug);
+  } else {
+    renderSolutions(solutions);
+  }
+}
+
+window.addEventListener("hashchange", router);
