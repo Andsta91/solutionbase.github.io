@@ -1,40 +1,64 @@
 # SolutionBase ⚡
 
-> A curated library of production-ready, end-to-end solutions for the Microsoft Power Platform.
+> A modern, open-source platform for discovering, learning, and deploying real-world solutions for the Microsoft Power Platform.
 
-**[🌐 Visit SolutionBase](https://solutionbase.github.io)** | **[Browse Solutions](https://solutionbase.github.io/#solutions)** | **[Contribute](#contributing)**
+**[🌐 Live Site](https://solutionbase.github.io)**
 
 ---
 
-## What is SolutionBase?
+## 🚀 What is SolutionBase?
 
-SolutionBase is a static website and community resource providing complete, deployable solutions for:
+SolutionBase is a **static, GitHub-powered knowledge platform** that provides complete, end-to-end solutions for:
 
-- 📱 **Power Apps** — Canvas Apps, Model-Driven Apps
-- ⚡ **Power Automate** — Flows, Approval Engines, Teams Bots
-- 🏢 **SharePoint** — Site Provisioning, Governance
-- 🧩 **SharePoint Webparts** — SPFx Components (React + TypeScript)
-- 💻 **PowerShell** — PnP Scripts, M365 Automation
+- 📱 Power Apps  
+- ⚡ Power Automate  
+- 💻 PowerShell  
+- 🏢 SharePoint  
 
-Every solution includes:
-- Full documentation and architecture overview
-- Component breakdown with descriptions
-- Prerequisites and license requirements
-- Packaged release for direct import
-- GitHub Discussions for community support
+Unlike scattered tutorials, SolutionBase delivers:
 
-## Repository Structure
+✅ Full working solutions  
+✅ Step-by-step documentation  
+✅ Downloadable packages  
+✅ Visual guides (images inside docs)  
+✅ Community-driven contributions  
 
-```
+---
+
+## 🧠 Key Concept
+
+Each solution is:
+
+- Defined in a central JSON file  
+- Stored as a folder in the repository  
+- Documented using Markdown (`README.md`)  
+- Rendered dynamically on the website  
+
+👉 This creates a **single source of truth** for code, docs, and assets.
+
+---
+
+## 📁 Repository Structure
+
+
 /
-├── index.html          # Main single-page app
+├── index.html
 ├── css/
-│   └── main.css        # All styles
+│ └── main.css
 ├── js/
-│   ├── solutions-data.js   # Solutions database
-│   └── app.js              # SPA routing + rendering
-└── _config.yml         # GitHub Pages config
-```
+│ └── app.js
+├── data/
+│ └── solutions.json
+├── solutions/
+│ ├── employee-onboarding/
+│ │ ├── README.md
+│ │ ├── package.zip
+│ │ └── image1.png
+│ ├── invoice-approval/
+│ ├── README.md
+│ └── image1.png
+└── assets/
+└── logo.png
 
 ## Adding a Solution
 
