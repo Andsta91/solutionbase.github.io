@@ -24,12 +24,7 @@ window.addEventListener("hashchange", router);
 function renderSolutions(list) {
   const app = document.getElementById("app");
 
-  app.innerHTML = `
-    <div class="container">
-      <h1>Solutions</h1>
-      <div class="grid" id="grid"></div>
-    </div>
-  `;
+  app.innerHTML = `<div class="grid" id="grid"></div>`;
 
   const grid = document.getElementById("grid");
 
@@ -38,13 +33,16 @@ function renderSolutions(list) {
     el.className = "card";
 
     el.innerHTML = `
-      <div class="tag">${s.tool}</div>
+      <div>
+        ${s.verified ? '<span class="badge verified">Verified</span>' : ''}
+        ${s.new ? '<span class="badge new">New</span>' : ''}
+      </div>
+
       <div class="title">${s.title}</div>
       <div class="desc">${s.description}</div>
-      <div class="meta">${s.difficulty} • ${s.time}</div>
+      <div class="meta">${s.tool} • ${s.difficulty}</div>
     `;
 
-    // 🔥 THIS is Step 4 (click navigation)
     el.onclick = () => {
       window.location.hash = `solution=${s.slug}`;
     };
