@@ -1,62 +1,221 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>SolutionBase</title>
-
-<link rel="stylesheet" href="./css/main.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="SolutionBase — Real-world, end-to-end solutions for Microsoft Power Platform: Power Apps, Power Automate, PowerShell, SharePoint, and more." />
+  <meta property="og:title" content="SolutionBase — Power Platform Solution Library" />
+  <meta property="og:description" content="Production-ready end-to-end solutions for the Microsoft Power Platform." />
+  <title>SolutionBase</title>
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'><rect width='32' height='32' rx='8' fill='%230052cc'/><text y='22' x='5' font-size='17' font-family='monospace' fill='white' font-weight='bold'>SB</text></svg>" />
+  <link rel="stylesheet" href="./css/main.css" />
 </head>
-
 <body>
+<div class="layout">
 
-<!-- SIDEBAR -->
-<div class="sidebar">
-  <div class="logo">
-  <span>SolutionBase</span>
-  <img src="./assets/logo.png">
+  <!-- SIDEBAR -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-logo">
+      <div class="logo-wordmark">
+        <div class="logo-mark">SB</div>
+        <span class="logo-name">SolutionBase</span>
+      </div>
+      <div class="logo-tagline">Power Platform · SharePoint · PowerShell</div>
+    </div>
+
+    <div class="sidebar-search">
+      <div class="sidebar-search-inner">
+        <svg class="sidebar-search-icon" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        <input type="text" id="sidebar-search" placeholder="Search solutions..." autocomplete="off" />
+      </div>
+    </div>
+
+    <nav class="sidebar-nav">
+      <div class="sidebar-section-label">Navigation</div>
+      <div class="sidebar-link active" data-nav="home"><span class="link-icon">🏠</span>Home</div>
+      <div class="sidebar-link" data-nav="solutions"><span class="link-icon">📚</span>All Solutions<span class="link-count" data-cat-count="all">0</span></div>
+
+      <div class="sidebar-section-label" style="margin-top:8px">Categories</div>
+      <div class="sidebar-link" data-nav="Power Apps"><span class="link-icon">📱</span>Power Apps<span class="link-count" data-cat-count="Power Apps">0</span></div>
+      <div class="sidebar-link" data-nav="Power Automate"><span class="link-icon">⚡</span>Power Automate<span class="link-count" data-cat-count="Power Automate">0</span></div>
+      <div class="sidebar-link" data-nav="SharePoint"><span class="link-icon">🏢</span>SharePoint<span class="link-count" data-cat-count="SharePoint">0</span></div>
+      <div class="sidebar-link" data-nav="PowerShell"><span class="link-icon">💻</span>PowerShell<span class="link-count" data-cat-count="PowerShell">0</span></div>
+
+      <div class="sidebar-section-label" style="margin-top:8px">Site</div>
+      <div class="sidebar-link" data-nav="about"><span class="link-icon">ℹ️</span>About</div>
+      <div class="sidebar-link" id="cmd-trigger"><span class="link-icon">⌘</span>Command Palette<span class="link-count" style="font-size:0.58rem">⌘K</span></div>
+    </nav>
+
+    <div class="sidebar-footer">
+      <a href="https://github.com/Andsta91/solutionbase.github.io" target="_blank" rel="noopener" class="sidebar-footer-link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        GitHub Repository
+      </a>
+      <a href="https://github.com/Andsta91/solutionbase.github.io/blob/main/CONTRIBUTING.md" target="_blank" rel="noopener" class="sidebar-footer-link">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
+        Contributing Guide
+      </a>
+      <button class="theme-btn theme-toggle"><span class="theme-icon">🌙</span>Toggle theme</button>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+
+    <!-- Topbar -->
+    <div class="topbar">
+      <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Open menu">
+        <span></span><span></span><span></span>
+      </button>
+      <span class="topbar-title">Home</span>
+      <div class="topbar-filters">
+        <button class="topbar-search-trigger" onclick="openCmdPalette()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+          Search solutions...
+          <span style="margin-left:auto; display:flex; align-items:center; gap:3px; opacity:0.55"><kbd>⌘</kbd><kbd>K</kbd></span>
+        </button>
+        <select class="topbar-select" id="toolFilter">
+          <option value="">All Tools</option>
+          <option value="Power Apps">Power Apps</option>
+          <option value="Power Automate">Power Automate</option>
+          <option value="SharePoint">SharePoint</option>
+          <option value="PowerShell">PowerShell</option>
+        </select>
+        <select class="topbar-select" id="difficultyFilter">
+          <option value="">All Levels</option>
+          <option value="Beginner">Beginner</option>
+          <option value="Intermediate">Intermediate</option>
+          <option value="Advanced">Advanced</option>
+        </select>
+        <select class="topbar-select" id="sortSelect">
+          <option value="stars">Most Stars</option>
+          <option value="downloads">Most Downloaded</option>
+          <option value="newest">Recently Updated</option>
+          <option value="title">A → Z</option>
+        </select>
+        <button class="topbar-github theme-toggle" style="border:1px solid var(--border)">
+          <span class="theme-icon">🌙</span> Theme
+        </button>
+        <a href="https://github.com/Andsta91/solutionbase.github.io" target="_blank" rel="noopener" class="topbar-github">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+
+    <!-- VIEW: HOME -->
+    <div id="view-home" class="view active">
+      <div class="home-hero">
+        <div class="hero-content">
+          <div class="hero-pill"><span class="hero-pill-dot"></span>Open Source · Community Driven · Production Ready</div>
+          <h1 class="hero-title">Real solutions for<br><em>Microsoft Power Platform</em></h1>
+          <p class="hero-desc">SolutionBase is a curated library of end-to-end, deployable solutions for Power Apps, Power Automate, SharePoint SPFx, and PowerShell. Skip the prototype — ship production code.</p>
+          <div class="hero-actions">
+            <button class="btn-primary" onclick="App.activeFilter='all'; applyFilters(); showView('solutions')">
+              Browse Solutions <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+            </button>
+            <a class="btn-outline" href="https://github.com/Andsta91/solutionbase.github.io" target="_blank" rel="noopener">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+              View on GitHub
+            </a>
+          </div>
+          <div class="hero-stats">
+            <div><div class="hero-stat-num" data-cat-count="all">0</div><div class="hero-stat-lbl">Solutions</div></div>
+            <div><div class="hero-stat-num" id="stat-downloads">—</div><div class="hero-stat-lbl">Downloads</div></div>
+            <div><div class="hero-stat-num">5</div><div class="hero-stat-lbl">Categories</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="whats-new-container" style="padding:20px 28px 0"></div>
+
+      <div class="home-section" style="border-bottom:1px solid var(--border)">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Browse by Category</h2>
+        </div>
+        <div class="category-grid">
+          <div class="cat-chip fade-in" onclick="App.activeFilter='Power Apps'; applyFilters(); showView('solutions')"><span class="cat-chip-icon">📱</span><div class="cat-chip-name">Power Apps</div><div class="cat-chip-count"><span data-cat-count="Power Apps">0</span> solutions</div></div>
+          <div class="cat-chip fade-in" onclick="App.activeFilter='Power Automate'; applyFilters(); showView('solutions')"><span class="cat-chip-icon">⚡</span><div class="cat-chip-name">Power Automate</div><div class="cat-chip-count"><span data-cat-count="Power Automate">0</span> solutions</div></div>
+          <div class="cat-chip fade-in" onclick="App.activeFilter='SharePoint'; applyFilters(); showView('solutions')"><span class="cat-chip-icon">🏢</span><div class="cat-chip-name">SharePoint</div><div class="cat-chip-count"><span data-cat-count="SharePoint">0</span> solutions</div></div>
+          <div class="cat-chip fade-in" onclick="App.activeFilter='PowerShell'; applyFilters(); showView('solutions')"><span class="cat-chip-icon">💻</span><div class="cat-chip-name">PowerShell</div><div class="cat-chip-count"><span data-cat-count="PowerShell">0</span> solutions</div></div>
+          <div class="cat-chip fade-in" onclick="App.activeFilter='all'; applyFilters(); showView('solutions')"><span class="cat-chip-icon">🗂️</span><div class="cat-chip-name">All Solutions</div><div class="cat-chip-count"><span data-cat-count="all">0</span> total</div></div>
+        </div>
+      </div>
+
+      <div class="home-section">
+        <div class="home-section-header">
+          <h2 class="home-section-title">Featured Solutions</h2>
+          <span class="home-section-more" onclick="App.activeFilter='all'; applyFilters(); showView('solutions')">View all <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg></span>
+        </div>
+        <div class="solutions-grid" id="featured-grid"></div>
+      </div>
+
+      <div style="padding:40px 28px; background:var(--bg-subtle); border-top:1px solid var(--border); text-align:center">
+        <div class="fade-in">
+          <h2 style="font-family:var(--font-display); font-style:italic; font-size:1.5rem; font-weight:900; letter-spacing:-0.03em; margin-bottom:10px">Built something useful? Contribute it.</h2>
+          <p style="color:var(--text-secondary); font-size:0.9rem; max-width:480px; margin:0 auto 20px; line-height:1.7">Every solution in this library came from someone solving a real problem. Package yours up and submit a pull request.</p>
+          <div style="display:flex; gap:8px; justify-content:center; flex-wrap:wrap">
+            <a href="https://github.com/Andsta91/solutionbase.github.io" target="_blank" rel="noopener" class="btn-primary">Contribute on GitHub</a>
+            <a href="https://github.com/Andsta91/solutionbase.github.io/issues/new" target="_blank" rel="noopener" class="btn-outline">Request a Solution</a>
+          </div>
+        </div>
+      </div>
+
+      <div style="padding:10px 28px; border-top:1px solid var(--border); display:flex; gap:16px; flex-wrap:wrap; align-items:center">
+        <span style="font-family:var(--font-mono); font-size:0.65rem; color:var(--text-tertiary)">Keyboard shortcuts:</span>
+        <span class="kbd-hint"><kbd>⌘</kbd><kbd>K</kbd> <span style="color:var(--text-tertiary); margin-left:3px">command palette</span></span>
+        <span class="kbd-hint"><kbd>/</kbd> <span style="color:var(--text-tertiary); margin-left:3px">search</span></span>
+        <span class="kbd-hint"><kbd>H</kbd><kbd>S</kbd><kbd>A</kbd> <span style="color:var(--text-tertiary); margin-left:3px">navigate</span></span>
+        <span class="kbd-hint"><kbd>T</kbd> <span style="color:var(--text-tertiary); margin-left:3px">theme</span></span>
+        <span class="kbd-hint"><kbd>Esc</kbd> <span style="color:var(--text-tertiary); margin-left:3px">go back</span></span>
+      </div>
+    </div><!-- /view-home -->
+
+    <!-- VIEW: SOLUTIONS -->
+    <div id="view-solutions" class="view">
+      <div class="solutions-page">
+        <div class="solutions-toolbar">
+          <div class="solutions-count" id="grid-count"><strong>0</strong> solutions</div>
+        </div>
+        <div class="active-filters" id="active-filters"></div>
+        <div class="solutions-grid" id="solutions-grid"></div>
+      </div>
+    </div>
+
+    <!-- VIEW: DETAIL -->
+    <div id="view-detail" class="detail-view">
+      <div class="detail-main" id="detail-main"></div>
+      <div class="detail-sidebar" id="detail-sidebar"></div>
+    </div>
+
+    <!-- VIEW: ABOUT -->
+    <div id="view-about" class="view">
+      <!-- JS rendered -->
+    </div>
+
+  </main>
 </div>
 
-  <div class="nav">
-    <a href="#">All Solutions</a>
-    <a href="#">Power Apps</a>
-    <a href="#">Power Automate</a>
-    <a href="#">PowerShell</a>
+<!-- COMMAND PALETTE -->
+<div class="cmd-overlay" id="cmd-overlay" role="dialog" aria-modal="true">
+  <div class="cmd-palette">
+    <div class="cmd-search-row">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input class="cmd-input" id="cmd-input" placeholder="Search solutions, navigate pages..." autocomplete="off" spellcheck="false" />
+      <kbd style="flex-shrink:0; opacity:0.6">Esc</kbd>
+    </div>
+    <div class="cmd-results" id="cmd-results"></div>
+    <div class="cmd-footer">
+      <span class="cmd-shortcut"><kbd>↑</kbd><kbd>↓</kbd> navigate</span>
+      <span class="cmd-shortcut"><kbd>↵</kbd> open</span>
+      <span class="cmd-shortcut"><kbd>Esc</kbd> close</span>
+    </div>
   </div>
 </div>
 
-<!-- MAIN -->
-<div class="main">
+<div class="toast-wrap" id="toast-wrap"></div>
 
-  <div class="topbar">
-    <div class="search">
-      <input type="text" id="search" placeholder="Search solutions...">
-    </div>
-
-    <div class="controls">
-      <select id="toolFilter">
-        <option value="">All Tools</option>
-        <option>Power Apps</option>
-        <option>Power Automate</option>
-        <option>PowerShell</option>
-      </select>
-
-      <select id="difficultyFilter">
-        <option value="">All Levels</option>
-        <option>Beginner</option>
-        <option>Intermediate</option>
-        <option>Advanced</option>
-      </select>
-
-      <button id="themeToggle">🌙</button>
-    </div>
-  </div>
-
-  <div id="app"></div>
-
-</div>
 <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
 <script src="./js/app.js"></script>
-
 </body>
 </html>
