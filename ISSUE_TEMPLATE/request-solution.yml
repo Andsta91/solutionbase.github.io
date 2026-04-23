@@ -1,0 +1,61 @@
+name: 💡 Request a Solution
+description: Request a solution you'd like to see added to SolutionBase
+title: "[Request] "
+labels: ["solution-request"]
+
+body:
+
+  - type: markdown
+    attributes:
+      value: |
+        ## Request a Solution
+        Describe the business problem you're trying to solve. If there's enough demand, we'll build it or accept contributions for it.
+
+  - type: dropdown
+    id: tool
+    attributes:
+      label: Which tool area?
+      options:
+        - Power Apps
+        - Power Automate
+        - SharePoint
+        - SharePoint Webparts (SPFx)
+        - PowerShell
+        - Not sure / combination
+    validations:
+      required: true
+
+  - type: textarea
+    id: problem
+    attributes:
+      label: What problem are you trying to solve?
+      description: Describe the business scenario clearly
+      placeholder: |
+        We need a way to let employees book meeting rooms through a Teams bot, with automatic calendar blocking and an approval step for premium rooms.
+    validations:
+      required: true
+
+  - type: textarea
+    id: current
+    attributes:
+      label: How are you handling it today?
+      placeholder: Currently done via email + manual calendar booking, which causes double-bookings.
+    validations:
+      required: false
+
+  - type: input
+    id: urgency
+    attributes:
+      label: How urgently do you need this?
+      placeholder: e.g. Nice to have / Needed within 3 months / Blocking a project
+    validations:
+      required: false
+
+  - type: checkboxes
+    id: contribute
+    attributes:
+      label: Would you be willing to contribute?
+      options:
+        - label: I could contribute the solution myself if given guidance
+        - label: I could help test a solution someone else builds
+        - label: I can only use it — not contribute
