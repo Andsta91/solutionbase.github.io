@@ -1,0 +1,10 @@
+blank_issues_enabled: false
+
+contact_links:
+  - name: 💬 GitHub Discussions
+    url: https://github.com/Andsta91/solutionbase.github.io/discussions
+    about: Ask questions, share ideas, or discuss existing solutions
+
+  - name: 📖 Contributing Guide
+    url: https://github.com/Andsta91/solutionbase.github.io/blob/main/CONTRIBUTING.md
+    about: Read the full guide before submitting a solution
