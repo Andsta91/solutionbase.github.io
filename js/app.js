@@ -15,6 +15,7 @@ const App = {
   difficultyFilter: '',
   darkMode: false,
   comments: {},
+  ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),  // { solutionId: 1-5 }
 
   sampleComments: {
     "employee-onboarding": [
@@ -296,6 +297,11 @@ function renderGrid() {
 
 function cardHTML(s, delay = 0) {
   const color = s.color || '#0078d4';
+  const userRating = App.ratings[s.id];
+  const ratingStars = userRating
+    ? `<span class="meta-item" title="Your rating: ${userRating}/5" style="color:#f59e0b; letter-spacing:-1px;">${'★'.repeat(userRating)}${'☆'.repeat(5-userRating)}</span>`
+    : '';
+
   return `
     <div class="sol-card" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" style="animation-delay:${delay}ms">
       <div class="sol-card-top">
@@ -321,6 +327,7 @@ function cardHTML(s, delay = 0) {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             ${formatNum(s.downloads)}
           </span>
+          ${ratingStars}
           <span class="badge badge-${s.difficulty.toLowerCase()}" style="border:none;background:none;padding:0">${s.difficulty}</span>
         </div>
         <div class="sol-card-arrow">
@@ -455,6 +462,7 @@ function openDetail(sol, pushState = true) {
     // Load README
     loadReadme(sol);
     renderComments(sol.id);
+    initRating(sol.id);
   }
 
   // Render sidebar
@@ -563,41 +571,96 @@ function simpleMarkdown(md) {
 
 // ── Comments ─────────────────────────────────────────
 function renderCommentsHTML(id) {
+  const sol = App.currentSolution;
+  // Always link to the repo's top-level Discussions tab, with a pre-filled title
+  const discussionTitle = encodeURIComponent(`Discussion: ${sol?.title || id}`);
+  const repoBase = 'https://github.com/Andsta91/solutionbase.github.io';
+  const discussionsUrl = `${repoBase}/discussions/new?category=solutions&title=${discussionTitle}&body=${encodeURIComponent(`**Solution:** ${sol?.title || id}\n\n<!-- Describe your question, issue, or feedback below -->`)}`;
+  const allDiscussionsUrl = `${repoBase}/discussions`;
+
   return `
     <div class="content-block" style="border-top:1px solid var(--border); padding-top:28px; margin-top:12px">
+
+      <!-- ── Star Rating ── -->
+      <div style="margin-bottom:24px; padding:16px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+        <div>
+          <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:6px;">Rate this solution</div>
+          <div class="star-rating" id="stars-${id}" style="display:flex; gap:4px;">
+            ${[1,2,3,4,5].map(n => `
+              <button
+                onclick="setRating('${id}', ${n})"
+                onmouseover="hoverStars('${id}', ${n})"
+                onmouseout="resetStarHover('${id}')"
+                data-star="${n}"
+                style="background:none; border:none; font-size:1.5rem; cursor:pointer; padding:2px; line-height:1; transition:transform 0.1s ease; color:var(--border-strong);"
+                aria-label="Rate ${n} star${n > 1 ? 's' : ''}"
+              >☆</button>`).join('')}
+          </div>
+        </div>
+        <div id="rating-display-${id}" style="text-align:right;">
+          <div style="font-size:1.25rem; font-weight:700; font-family:var(--font-mono); color:var(--text-primary);" id="rating-value-${id}">—</div>
+          <div style="font-size:0.72rem; color:var(--text-tertiary);" id="rating-label-${id}">not rated yet</div>
+        </div>
+      </div>
+
+      <!-- ── Discussion tabs ── -->
       <h2 class="section-title">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
         Discussion
       </h2>
 
       <div style="margin-bottom:16px">
-        <div style="display:flex; gap:8px; margin-bottom:12px">
-          <button onclick="setCommentTab(this,'local','${id}')" class="btn-outline" data-tab="local" style="padding:6px 12px; font-size:0.78rem; border-color:var(--accent); color:var(--accent); background:var(--accent-light)">Comments</button>
-          <button onclick="setCommentTab(this,'github','${id}')" class="btn-outline" data-tab="github" style="padding:6px 12px; font-size:0.78rem">GitHub Discussions</button>
+        <div style="display:flex; gap:8px; margin-bottom:12px; flex-wrap:wrap;">
+          <button onclick="setCommentTab(this,'local','${id}')" class="btn-outline" data-tab="local" style="padding:6px 12px; font-size:0.78rem; border-color:var(--accent); color:var(--accent); background:var(--accent-light)">
+            💬 Comments
+          </button>
+          <button onclick="setCommentTab(this,'github','${id}')" class="btn-outline" data-tab="github" style="padding:6px 12px; font-size:0.78rem">
+            🐙 GitHub Discussions
+          </button>
         </div>
 
+        <!-- Local comments -->
         <div id="tab-local-${id}">
           <div style="background:var(--bg-subtle); border:1px solid var(--border); border-radius:8px; padding:14px; margin-bottom:14px">
-            <textarea id="comment-input-${id}" placeholder="Share your experience or ask a question..." style="width:100%; min-height:80px; background:var(--bg-white); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:var(--font-sans); font-size:0.85rem; color:var(--text-primary); outline:none; resize:vertical; margin-bottom:8px; transition:border-color var(--duration) var(--ease);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
+            <textarea id="comment-input-${id}" placeholder="Share your experience, ask a question, or suggest an improvement..." style="width:100%; min-height:80px; background:var(--bg-white); border:1px solid var(--border); border-radius:6px; padding:10px; font-family:var(--font-sans); font-size:0.85rem; color:var(--text-primary); outline:none; resize:vertical; margin-bottom:8px; transition:border-color var(--duration) var(--ease);" onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--border)'"></textarea>
             <div style="display:flex; justify-content:flex-end; gap:6px">
               <button class="btn-outline" style="padding:6px 12px; font-size:0.78rem" onclick="document.getElementById('comment-input-${id}').value=''">Clear</button>
-              <button class="btn-primary" style="padding:6px 12px; font-size:0.78rem; background:var(--text-primary)" onclick="postComment('${id}')">Post</button>
+              <button class="btn-primary" style="padding:6px 12px; font-size:0.78rem; background:var(--text-primary)" onclick="postComment('${id}')">Post Comment</button>
             </div>
           </div>
           <div id="comments-list-${id}"></div>
         </div>
 
+        <!-- GitHub Discussions panel -->
         <div id="tab-github-${id}" style="display:none">
-          <div style="text-align:center; padding:32px; border:1px solid var(--border); border-radius:8px; background:var(--bg-subtle)">
-            <div style="font-size:2rem; margin-bottom:12px">💬</div>
-            <div style="font-family:var(--font-display); font-style:italic; font-size:1.05rem; margin-bottom:8px">GitHub Discussions</div>
-            <div style="font-size:0.82rem; color:var(--text-secondary); margin-bottom:16px">Ask questions and discuss this solution in the GitHub repository.</div>
-            <a href="${App.currentSolution?.githubRepo || '#'}/discussions" target="_blank" rel="noopener" class="btn-github" style="display:inline-flex">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
-              Open GitHub Discussions
-            </a>
+          <div style="padding:28px; border:1px solid var(--border); border-radius:10px; background:var(--bg-subtle);">
+
+            <div style="display:flex; align-items:flex-start; gap:16px; margin-bottom:20px; flex-wrap:wrap;">
+              <div style="font-size:2.5rem; flex-shrink:0;">💬</div>
+              <div>
+                <div style="font-family:var(--font-display); font-style:italic; font-size:1.05rem; font-weight:700; margin-bottom:6px;">GitHub Discussions</div>
+                <div style="font-size:0.85rem; color:var(--text-secondary); line-height:1.6; max-width:480px;">
+                  GitHub Discussions is a permanent forum built into the repository. Use it to ask installation questions, share deployment notes, report bugs, or suggest improvements. Unlike the Comments tab above, discussions are stored in GitHub and visible to everyone — even without this site.
+                </div>
+              </div>
+            </div>
+
+            <div style="display:flex; gap:10px; flex-wrap:wrap;">
+              <a href="${discussionsUrl}" target="_blank" rel="noopener" class="btn-primary" style="background:var(--text-primary); font-size:0.82rem;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+                Start a Discussion about this Solution
+              </a>
+              <a href="${allDiscussionsUrl}" target="_blank" rel="noopener" class="btn-outline" style="font-size:0.82rem;">
+                Browse All Discussions →
+              </a>
+            </div>
+
+            <div style="margin-top:16px; padding:12px; background:var(--bg-white); border:1px solid var(--border); border-radius:7px; font-size:0.78rem; color:var(--text-tertiary); line-height:1.6;">
+              <strong style="color:var(--text-secondary);">Note:</strong> GitHub Discussions must be enabled on the repository. Go to <strong>Settings → Features → Discussions</strong> to activate it. Once enabled, the link above will open a pre-filled discussion form for this solution.
+            </div>
           </div>
         </div>
+
       </div>
     </div>`;
 }
@@ -656,6 +719,83 @@ function postComment(id) {
   input.value = '';
   renderComments(id);
   toast('Comment posted ✅');
+}
+
+// ── Star Rating System ────────────────────────────
+const STAR_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
+
+function initRating(id) {
+  const saved = App.ratings[id];
+  if (saved) applyStars(id, saved, true);
+}
+
+function hoverStars(id, n) {
+  const saved = App.ratings[id];
+  // Only show hover if not yet rated, or hovering over different value
+  const btns = document.querySelectorAll(`#stars-${id} button`);
+  btns.forEach((btn, i) => {
+    btn.style.color = i < n ? '#f59e0b' : 'var(--border-strong)';
+    btn.textContent = i < n ? '★' : '☆';
+    btn.style.transform = i === n - 1 ? 'scale(1.2)' : 'scale(1)';
+  });
+}
+
+function resetStarHover(id) {
+  const saved = App.ratings[id];
+  if (saved) {
+    applyStars(id, saved, false);
+  } else {
+    const btns = document.querySelectorAll(`#stars-${id} button`);
+    btns.forEach(btn => {
+      btn.style.color = 'var(--border-strong)';
+      btn.textContent = '☆';
+      btn.style.transform = 'scale(1)';
+    });
+  }
+}
+
+function applyStars(id, n, animate) {
+  const btns = document.querySelectorAll(`#stars-${id} button`);
+  btns.forEach((btn, i) => {
+    btn.style.color = i < n ? '#f59e0b' : 'var(--border-strong)';
+    btn.textContent = i < n ? '★' : '☆';
+    btn.style.transform = 'scale(1)';
+    if (animate && i < n) {
+      btn.style.animation = `none`;
+      setTimeout(() => {
+        btn.style.transition = `transform 0.15s ease ${i * 40}ms, color 0.15s ease`;
+        btn.style.transform = 'scale(1.15)';
+        setTimeout(() => btn.style.transform = 'scale(1)', 200 + i * 40);
+      }, 10);
+    }
+  });
+  updateRatingDisplay(id, n);
+}
+
+function updateRatingDisplay(id, n) {
+  const valEl = document.getElementById(`rating-value-${id}`);
+  const lblEl = document.getElementById(`rating-label-${id}`);
+  if (valEl) valEl.textContent = n ? `${n}/5` : '—';
+  if (lblEl) lblEl.textContent = n ? `${STAR_LABELS[n]} — your rating` : 'not rated yet';
+}
+
+function setRating(id, n) {
+  const previous = App.ratings[id];
+
+  if (previous === n) {
+    // Click same star again = remove rating
+    delete App.ratings[id];
+    localStorage.setItem('sb-ratings', JSON.stringify(App.ratings));
+    resetStarHover(id);
+    updateRatingDisplay(id, 0);
+    toast('Rating removed');
+    return;
+  }
+
+  App.ratings[id] = n;
+  localStorage.setItem('sb-ratings', JSON.stringify(App.ratings));
+  applyStars(id, n, true);
+  toast(`Rated ${n}/5 — ${STAR_LABELS[n]}! ${'★'.repeat(n)}`);
 }
 
 // ── Utilities ────────────────────────────────────────
