@@ -298,9 +298,17 @@ function renderGrid() {
 function cardHTML(s, delay = 0) {
   const color = s.color || '#0078d4';
   const userRating = App.ratings[s.id];
-  const ratingStars = userRating
-    ? `<span class="meta-item" title="Your rating: ${userRating}/5" style="color:#f59e0b; letter-spacing:-1px;">${'★'.repeat(userRating)}${'☆'.repeat(5-userRating)}</span>`
-    : '';
+
+  // Rating block shown between tags and footer — prominent, always visible
+  const ratingBlock = userRating
+    ? `<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--border); margin-top:4px;">
+         <span style="color:#f59e0b; font-size:0.95rem; letter-spacing:1px; line-height:1">${'★'.repeat(userRating)}${'☆'.repeat(5 - userRating)}</span>
+         <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary)">Your rating: ${userRating}/5 · ${STAR_LABELS[userRating]}</span>
+       </div>`
+    : `<div style="display:flex; align-items:center; gap:6px; padding:8px 0; border-top:1px solid var(--border); margin-top:4px;">
+         <span style="color:var(--border-strong); font-size:0.95rem; letter-spacing:1px; line-height:1">☆☆☆☆☆</span>
+         <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary)">Not rated — open to rate</span>
+       </div>`;
 
   return `
     <div class="sol-card" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" style="animation-delay:${delay}ms">
@@ -317,6 +325,7 @@ function cardHTML(s, delay = 0) {
         ${s.tags.slice(0, 4).map(t => `<span class="tag">${t}</span>`).join('')}
         ${s.tags.length > 4 ? `<span class="tag">+${s.tags.length - 4}</span>` : ''}
       </div>
+      ${ratingBlock}
       <div class="sol-card-footer">
         <div class="sol-card-meta">
           <span class="meta-item">
@@ -327,7 +336,6 @@ function cardHTML(s, delay = 0) {
             <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
             ${formatNum(s.downloads)}
           </span>
-          ${ratingStars}
           <span class="badge badge-${s.difficulty.toLowerCase()}" style="border:none;background:none;padding:0">${s.difficulty}</span>
         </div>
         <div class="sol-card-arrow">
@@ -377,6 +385,20 @@ function openDetail(sol, pushState = true) {
             <span class="badge badge-tool">${sol.tool}</span>
             <span class="badge ${sol.status === 'Production Ready' ? 'badge-production' : 'badge-beta'}">${sol.status}</span>
             <span class="badge badge-${sol.difficulty.toLowerCase()}">${sol.difficulty}</span>
+            <span id="detail-rating-badge-${sol.id}"
+              onclick="document.getElementById('stars-${sol.id}')?.scrollIntoView({behavior:'smooth', block:'center'})"
+              title="${App.ratings[sol.id] ? `Your rating: ${App.ratings[sol.id]}/5 — click to change` : 'Click to rate this solution'}"
+              style="display:inline-flex; align-items:center; gap:5px; padding:3px 9px; border-radius:4px; cursor:pointer;
+                     background:${App.ratings[sol.id] ? 'rgba(245,158,11,0.1)' : 'var(--bg-subtle)'};
+                     border:1px solid ${App.ratings[sol.id] ? 'rgba(245,158,11,0.35)' : 'var(--border)'};
+                     font-size:0.72rem; font-family:var(--font-mono); transition:all 0.15s ease;">
+              <span style="color:#f59e0b; letter-spacing:0.5px; font-size:0.8rem;">
+                ${App.ratings[sol.id] ? '★'.repeat(App.ratings[sol.id]) + '☆'.repeat(5 - App.ratings[sol.id]) : '☆☆☆☆☆'}
+              </span>
+              <span style="color:${App.ratings[sol.id] ? '#d97706' : 'var(--text-tertiary)'}; font-weight:600;">
+                ${App.ratings[sol.id] ? `${App.ratings[sol.id]}/5 · ${STAR_LABELS[App.ratings[sol.id]]}` : 'Rate this'}
+              </span>
+            </span>
           </div>
           <h1 class="detail-title">${sol.title}</h1>
         </div>
@@ -476,10 +498,34 @@ function openDetail(sol, pushState = true) {
       <div class="sidebar-widget">
         <div class="widget-title">Statistics</div>
         <div class="stat-grid">
-          <div class="stat-cell"><div class="stat-num">${sol.stars}</div><div class="stat-lbl">Stars</div></div>
+          <div class="stat-cell"><div class="stat-num">${sol.stars}</div><div class="stat-lbl">GH Stars</div></div>
           <div class="stat-cell"><div class="stat-num">${formatNum(sol.downloads)}</div><div class="stat-lbl">Downloads</div></div>
           <div class="stat-cell"><div class="stat-num">${sol.components.length}</div><div class="stat-lbl">Components</div></div>
           <div class="stat-cell"><div class="stat-num">${sol.features.length}</div><div class="stat-lbl">Features</div></div>
+        </div>
+
+        <!-- User rating inside stats widget -->
+        <div id="sidebar-rating-${sol.id}" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
+          <div style="font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:8px;">Your Rating</div>
+          ${App.ratings[sol.id]
+            ? `<div style="display:flex; align-items:center; justify-content:space-between;">
+                 <div>
+                   <div style="color:#f59e0b; font-size:1.1rem; letter-spacing:1px; line-height:1; margin-bottom:3px;">${'★'.repeat(App.ratings[sol.id])}${'☆'.repeat(5 - App.ratings[sol.id])}</div>
+                   <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-secondary);">${App.ratings[sol.id]}/5 — ${STAR_LABELS[App.ratings[sol.id]]}</div>
+                 </div>
+                 <button onclick="document.getElementById('stars-${sol.id}')?.scrollIntoView({behavior:'smooth',block:'center'})"
+                   style="font-size:0.7rem; color:var(--accent); background:none; border:none; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:2px;">
+                   Change
+                 </button>
+               </div>`
+            : `<div style="display:flex; align-items:center; justify-content:space-between;">
+                 <div style="font-size:0.8rem; color:var(--text-tertiary);">You haven't rated this yet.</div>
+                 <button onclick="document.getElementById('stars-${sol.id}')?.scrollIntoView({behavior:'smooth',block:'center'})"
+                   style="font-size:0.7rem; color:var(--accent); background:none; border:none; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:2px;">
+                   Rate it ↓
+                 </button>
+               </div>`
+          }
         </div>
       </div>
 
@@ -788,6 +834,7 @@ function setRating(id, n) {
     localStorage.setItem('sb-ratings', JSON.stringify(App.ratings));
     resetStarHover(id);
     updateRatingDisplay(id, 0);
+    syncRatingUI(id, 0);
     toast('Rating removed');
     return;
   }
@@ -795,7 +842,59 @@ function setRating(id, n) {
   App.ratings[id] = n;
   localStorage.setItem('sb-ratings', JSON.stringify(App.ratings));
   applyStars(id, n, true);
+  syncRatingUI(id, n);
   toast(`Rated ${n}/5 — ${STAR_LABELS[n]}! ${'★'.repeat(n)}`);
+}
+
+// Updates the hero badge + sidebar widget live after a rating is set/changed
+function syncRatingUI(id, n) {
+  // 1. Hero badge (top of detail page)
+  const heroBadge = document.getElementById(`detail-rating-badge-${id}`);
+  if (heroBadge) {
+    if (n > 0) {
+      heroBadge.style.background = 'rgba(245,158,11,0.1)';
+      heroBadge.style.borderColor = 'rgba(245,158,11,0.35)';
+      heroBadge.innerHTML = `
+        <span style="color:#f59e0b; letter-spacing:0.5px; font-size:0.8rem;">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</span>
+        <span style="color:#d97706; font-weight:600;">${n}/5 · ${STAR_LABELS[n]}</span>`;
+    } else {
+      heroBadge.style.background = 'var(--bg-subtle)';
+      heroBadge.style.borderColor = 'var(--border)';
+      heroBadge.innerHTML = `
+        <span style="color:#f59e0b; letter-spacing:0.5px; font-size:0.8rem;">☆☆☆☆☆</span>
+        <span style="color:var(--text-tertiary); font-weight:600;">Rate this</span>`;
+    }
+  }
+
+  // 2. Sidebar rating block
+  const sidebarRating = document.getElementById(`sidebar-rating-${id}`);
+  if (sidebarRating) {
+    const inner = sidebarRating.querySelector('div:last-child') || sidebarRating;
+    if (n > 0) {
+      sidebarRating.innerHTML = `
+        <div style="font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:8px;">Your Rating</div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="color:#f59e0b; font-size:1.1rem; letter-spacing:1px; line-height:1; margin-bottom:3px;">${'★'.repeat(n)}${'☆'.repeat(5 - n)}</div>
+            <div style="font-family:var(--font-mono); font-size:0.72rem; color:var(--text-secondary);">${n}/5 — ${STAR_LABELS[n]}</div>
+          </div>
+          <button onclick="document.getElementById('stars-${id}')?.scrollIntoView({behavior:'smooth',block:'center'})"
+            style="font-size:0.7rem; color:var(--accent); background:none; border:none; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:2px;">
+            Change
+          </button>
+        </div>`;
+    } else {
+      sidebarRating.innerHTML = `
+        <div style="font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:8px;">Your Rating</div>
+        <div style="display:flex; align-items:center; justify-content:space-between;">
+          <div style="font-size:0.8rem; color:var(--text-tertiary);">You haven't rated this yet.</div>
+          <button onclick="document.getElementById('stars-${id}')?.scrollIntoView({behavior:'smooth',block:'center'})"
+            style="font-size:0.7rem; color:var(--accent); background:none; border:none; cursor:pointer; padding:4px 0; text-decoration:underline; text-underline-offset:2px;">
+            Rate it ↓
+          </button>
+        </div>`;
+    }
+  }
 }
 
 // ── Utilities ────────────────────────────────────────
