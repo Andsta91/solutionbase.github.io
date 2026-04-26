@@ -10,7 +10,7 @@
 // window.FIREBASE_CONFIG is set by that file before this script runs.
 // If the file is missing or has placeholder values, ratings fall back to local only.
 const FIREBASE_CONFIG = (typeof window.FIREBASE_CONFIG !== 'undefined' &&
-  window.FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY')
+  window.FIREBASE_CONFIG.apiKey !== 'AIzaSyAKB7Uy4moVJEzcvRC2vH9-1TbJG__pIuo')
   ? window.FIREBASE_CONFIG
   : null;
 
