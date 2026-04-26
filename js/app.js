@@ -4,6 +4,100 @@
    Renders: home, listing, detail views
 ===================================================== */
 
+// ── Firebase Config ────────────────────────────────
+// Replace these values with your own Firebase project config
+// See: https://console.firebase.google.com → Project Settings → Your apps → SDK setup
+const FIREBASE_CONFIG = {
+  apiKey:            "AIzaSyAKB7Uy4moVJEzcvRC2vH9-1TbJG__pIuo",
+  authDomain: "solutionbase-a6ba1.firebaseapp.com",
+  projectId: "solutionbase-a6ba1",
+  storageBucket: "solutionbase-a6ba1.firebasestorage.app",
+  messagingSenderId: "786578719167",
+  appId: "1:786578719167:web:828fb0039db071bc49610a",
+  measurementId: "G-YVVXE4XQEL"
+};
+
+// ── Shared Ratings Module ──────────────────────────
+// Handles reading/writing aggregate ratings to Firebase Firestore
+// Falls back gracefully if Firebase is not configured yet
+const Ratings = {
+  db: null,          // Firestore instance, set after Firebase init
+  cache: {},         // { solutionId: { avg: 4.2, count: 17 } }
+  listeners: {},     // active Firestore snapshot listeners
+
+  // Call once after Firebase loads
+  init(db) {
+    this.db = db;
+  },
+
+  // Returns true if Firebase has been configured with real values
+  isConfigured() {
+    return FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY' && this.db !== null;
+  },
+
+  // Subscribe to live aggregate rating for a solution
+  // Calls callback(avg, count) whenever the value changes in Firestore
+  subscribe(solutionId, callback) {
+    if (!this.isConfigured()) return;
+    if (this.listeners[solutionId]) return; // already listening
+
+    const docRef = this.db.collection('ratings').doc(solutionId);
+    const unsub = docRef.onSnapshot(snap => {
+      if (snap.exists) {
+        const data = snap.data();
+        this.cache[solutionId] = { avg: data.avg || 0, count: data.count || 0 };
+      } else {
+        this.cache[solutionId] = { avg: 0, count: 0 };
+      }
+      callback(this.cache[solutionId].avg, this.cache[solutionId].count);
+    }, () => {
+      // Silently ignore errors (offline, unindexed, etc.)
+    });
+    this.listeners[solutionId] = unsub;
+  },
+
+  // Unsubscribe from live updates for a solution (call when leaving detail page)
+  unsubscribe(solutionId) {
+    if (this.listeners[solutionId]) {
+      this.listeners[solutionId]();
+      delete this.listeners[solutionId];
+    }
+  },
+
+  // Submit or update a user's rating using a Firestore transaction
+  // userPrev = previous rating (0 if none), userNew = new rating (0 = remove)
+  async submit(solutionId, userPrev, userNew) {
+    if (!this.isConfigured()) return;
+    const docRef = this.db.collection('ratings').doc(solutionId);
+
+    try {
+      await this.db.runTransaction(async tx => {
+        const snap = await tx.get(docRef);
+        let total = 0, count = 0;
+        if (snap.exists) { total = snap.data().total || 0; count = snap.data().count || 0; }
+
+        // Remove previous rating contribution
+        if (userPrev > 0) { total -= userPrev; count -= 1; }
+        // Add new rating contribution
+        if (userNew > 0)  { total += userNew;  count += 1; }
+
+        if (count <= 0) {
+          tx.delete(docRef);
+        } else {
+          tx.set(docRef, { total, count, avg: Math.round((total / count) * 10) / 10 });
+        }
+      });
+    } catch (e) {
+      // Silently fail — user's local rating is still saved
+    }
+  },
+
+  // Get cached aggregate (used for immediate render before Firestore responds)
+  get(solutionId) {
+    return this.cache[solutionId] || { avg: 0, count: 0 };
+  }
+};
+
 // ── State ──────────────────────────────────────────
 const App = {
   solutions: [],
@@ -15,7 +109,7 @@ const App = {
   difficultyFilter: '',
   darkMode: false,
   comments: {},
-  ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),  // { solutionId: 1-5 }
+  ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),  // { solutionId: 1-5 } — user's own ratings
 
   sampleComments: {
     "employee-onboarding": [
@@ -51,6 +145,17 @@ async function boot() {
   }
 
   App.filtered = [...App.solutions];
+
+  // ── Initialize Firebase (shared ratings) ──────────
+  // Only activates if FIREBASE_CONFIG has been filled in with real values
+  try {
+    if (typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY') {
+      firebase.initializeApp(FIREBASE_CONFIG);
+      Ratings.init(firebase.firestore());
+    }
+  } catch (e) {
+    // Firebase not available or already initialized — ratings fall back to local only
+  }
 
   // Populate category counts
   updateCatCounts();
@@ -176,6 +281,8 @@ function showView(view) {
     setTimeout(() => initFadeIns(document.getElementById('view-home')), 50);
   } else if (view === 'solutions') {
     document.getElementById('view-solutions').classList.add('active');
+    // Unsubscribe from any active Firestore rating listeners
+    if (App.currentSolution) Ratings.unsubscribe(App.currentSolution.id);
     renderGrid();
     renderFilterPills();
     updateSidebarActive(App.activeFilter === 'all' ? 'solutions' : App.activeFilter);
@@ -299,15 +406,27 @@ function cardHTML(s, delay = 0) {
   const color = s.color || '#0078d4';
   const userRating = App.ratings[s.id];
 
-  // Rating block shown between tags and footer — prominent, always visible
+  // Community aggregate (from cache — populated after visiting detail page)
+  const comm = Ratings.get(s.id);
+  const commText = comm.count > 0
+    ? comm.avg.toFixed(1) + ' ★ (' + comm.count + ' rating' + (comm.count !== 1 ? 's' : '') + ')'
+    : Ratings.isConfigured() ? 'No ratings yet' : '';
+
+  // Rating block shown between tags and footer
   const ratingBlock = userRating
-    ? `<div style="display:flex; align-items:center; gap:8px; padding:8px 0; border-top:1px solid var(--border); margin-top:4px;">
-         <span style="color:#f59e0b; font-size:0.95rem; letter-spacing:1px; line-height:1">${'★'.repeat(userRating)}${'☆'.repeat(5 - userRating)}</span>
-         <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary)">Your rating: ${userRating}/5 · ${STAR_LABELS[userRating]}</span>
+    ? `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--border); margin-top:4px; flex-wrap:wrap; gap:6px;">
+         <div style="display:flex; align-items:center; gap:6px;">
+           <span style="color:#f59e0b; font-size:0.95rem; letter-spacing:1px; line-height:1;">${'★'.repeat(userRating)}${'☆'.repeat(5 - userRating)}</span>
+           <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary);">Your rating: ${userRating}/5</span>
+         </div>
+         ${commText ? `<span style="font-family:var(--font-mono); font-size:0.67rem; color:#f59e0b; font-weight:600;">${commText}</span>` : ''}
        </div>`
-    : `<div style="display:flex; align-items:center; gap:6px; padding:8px 0; border-top:1px solid var(--border); margin-top:4px;">
-         <span style="color:var(--border-strong); font-size:0.95rem; letter-spacing:1px; line-height:1">☆☆☆☆☆</span>
-         <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary)">Not rated — open to rate</span>
+    : `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--border); margin-top:4px; flex-wrap:wrap; gap:4px;">
+         <div style="display:flex; align-items:center; gap:6px;">
+           <span style="color:var(--border-strong); font-size:0.95rem; letter-spacing:1px; line-height:1;">☆☆☆☆☆</span>
+           <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary);">Not rated — open to rate</span>
+         </div>
+         ${commText ? `<span style="font-family:var(--font-mono); font-size:0.67rem; color:#f59e0b; font-weight:600;">${commText}</span>` : ''}
        </div>`;
 
   return `
@@ -504,6 +623,23 @@ function openDetail(sol, pushState = true) {
           <div class="stat-cell"><div class="stat-num">${sol.features.length}</div><div class="stat-lbl">Features</div></div>
         </div>
 
+        <!-- Community rating row inside stats -->
+        <div style="margin-top:10px; padding-top:10px; border-top:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+          <div>
+            <div style="font-size:0.62rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:3px;">Community Rating</div>
+            <div style="display:flex; align-items:baseline; gap:6px;">
+              <span id="sb-comm-avg-${sol.id}" style="font-family:var(--font-mono); font-size:1.1rem; font-weight:700; color:#f59e0b; line-height:1;">
+                ${Ratings.isConfigured() ? '…' : '—'}
+              </span>
+              <span style="font-size:0.7rem; color:var(--text-tertiary);">/ 5</span>
+            </div>
+            <div id="sb-comm-count-${sol.id}" style="font-size:0.68rem; color:var(--text-tertiary); font-family:var(--font-mono);">
+              ${Ratings.isConfigured() ? 'Loading…' : 'Set up Firebase'}
+            </div>
+          </div>
+          <div style="color:#f59e0b; font-size:1.0rem; letter-spacing:1px; opacity:${Ratings.isConfigured() ? '1' : '0.2'};">★★★★★</div>
+        </div>
+
         <!-- User rating inside stats widget -->
         <div id="sidebar-rating-${sol.id}" style="margin-top:12px; padding-top:12px; border-top:1px solid var(--border);">
           <div style="font-size:0.65rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:8px;">Your Rating</div>
@@ -628,25 +764,50 @@ function renderCommentsHTML(id) {
     <div class="content-block" style="border-top:1px solid var(--border); padding-top:28px; margin-top:12px">
 
       <!-- ── Star Rating ── -->
-      <div style="margin-bottom:24px; padding:16px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:10px; display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
-        <div>
-          <div style="font-size:0.75rem; font-weight:600; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:6px;">Rate this solution</div>
-          <div class="star-rating" id="stars-${id}" style="display:flex; gap:4px;">
-            ${[1,2,3,4,5].map(n => `
-              <button
-                onclick="setRating('${id}', ${n})"
-                onmouseover="hoverStars('${id}', ${n})"
-                onmouseout="resetStarHover('${id}')"
-                data-star="${n}"
-                style="background:none; border:none; font-size:1.5rem; cursor:pointer; padding:2px; line-height:1; transition:transform 0.1s ease; color:var(--border-strong);"
-                aria-label="Rate ${n} star${n > 1 ? 's' : ''}"
-              >☆</button>`).join('')}
+      <div style="margin-bottom:24px; padding:18px; background:var(--bg-subtle); border:1px solid var(--border); border-radius:10px;">
+
+        <!-- Community aggregate row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; padding-bottom:14px; border-bottom:1px solid var(--border);">
+          <div>
+            <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:4px;">Community Rating</div>
+            <div style="display:flex; align-items:baseline; gap:8px;">
+              <span id="rating-avg-${id}" style="font-family:var(--font-mono); font-size:1.6rem; font-weight:700; color:${Ratings.isConfigured() ? '#f59e0b' : 'var(--text-tertiary)'}; line-height:1;">
+                ${Ratings.isConfigured() ? '…' : '—'}
+              </span>
+              <span style="font-size:0.75rem; color:var(--text-tertiary);">/ 5</span>
+            </div>
+            <div id="rating-count-${id}" style="font-size:0.72rem; color:var(--text-tertiary); font-family:var(--font-mono); margin-top:2px;">
+              ${Ratings.isConfigured() ? 'Loading…' : 'Firebase not configured'}
+            </div>
+          </div>
+          <div style="text-align:right;">
+            <div style="color:#f59e0b; font-size:1.4rem; letter-spacing:2px; line-height:1; opacity:${Ratings.isConfigured() ? '1' : '0.25'};">★★★★★</div>
+            <div style="font-size:0.68rem; color:var(--text-tertiary); margin-top:4px;">from all users</div>
           </div>
         </div>
-        <div id="rating-display-${id}" style="text-align:right;">
-          <div style="font-size:1.25rem; font-weight:700; font-family:var(--font-mono); color:var(--text-primary);" id="rating-value-${id}">—</div>
-          <div style="font-size:0.72rem; color:var(--text-tertiary);" id="rating-label-${id}">not rated yet</div>
+
+        <!-- Personal rating row -->
+        <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:12px;">
+          <div>
+            <div style="font-size:0.7rem; font-weight:600; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:6px;">Your Rating</div>
+            <div class="star-rating" id="stars-${id}" style="display:flex; gap:4px;">
+              ${[1,2,3,4,5].map(n => `
+                <button
+                  onclick="setRating('${id}', ${n})"
+                  onmouseover="hoverStars('${id}', ${n})"
+                  onmouseout="resetStarHover('${id}')"
+                  data-star="${n}"
+                  style="background:none; border:none; font-size:1.5rem; cursor:pointer; padding:2px; line-height:1; transition:transform 0.1s ease; color:var(--border-strong);"
+                  aria-label="Rate ${n} star${n > 1 ? 's' : ''}"
+                >☆</button>`).join('')}
+            </div>
+          </div>
+          <div id="rating-display-${id}" style="text-align:right;">
+            <div style="font-size:1.25rem; font-weight:700; font-family:var(--font-mono); color:var(--text-primary); line-height:1;" id="rating-value-${id}">—</div>
+            <div style="font-size:0.72rem; color:var(--text-tertiary); margin-top:2px;" id="rating-label-${id}">not rated yet</div>
+          </div>
         </div>
+
       </div>
 
       <!-- ── Discussion tabs ── -->
@@ -771,8 +932,29 @@ function postComment(id) {
 const STAR_LABELS = ['', 'Poor', 'Fair', 'Good', 'Great', 'Excellent'];
 
 function initRating(id) {
+  // Render personal rating immediately from localStorage
   const saved = App.ratings[id];
   if (saved) applyStars(id, saved, true);
+
+  // Subscribe to live community aggregate from Firestore
+  Ratings.subscribe(id, (avg, count) => {
+    updateCommunityRatingDisplay(id, avg, count);
+  });
+}
+
+// Renders the community aggregate (avg + count) in the rating widget and sidebar
+function updateCommunityRatingDisplay(id, avg, count) {
+  // In the rating widget (detail page)
+  const avgEl   = document.getElementById('rating-avg-' + id);
+  const countEl = document.getElementById('rating-count-' + id);
+  if (avgEl)   avgEl.textContent   = count > 0 ? avg.toFixed(1) : '—';
+  if (countEl) countEl.textContent = count > 0 ? count + ' rating' + (count !== 1 ? 's' : '') : 'No ratings yet';
+
+  // In the sidebar community stats cell
+  const sbAvgEl   = document.getElementById('sb-comm-avg-' + id);
+  const sbCountEl = document.getElementById('sb-comm-count-' + id);
+  if (sbAvgEl)   sbAvgEl.textContent   = count > 0 ? avg.toFixed(1) + ' ★' : '—';
+  if (sbCountEl) sbCountEl.textContent = count > 0 ? count + ' rating' + (count !== 1 ? 's' : '') : 'No ratings yet';
 }
 
 function hoverStars(id, n) {
@@ -826,12 +1008,13 @@ function updateRatingDisplay(id, n) {
 }
 
 function setRating(id, n) {
-  const previous = App.ratings[id];
+  const previous = App.ratings[id] || 0;
 
   if (previous === n) {
     // Click same star again = remove rating
     delete App.ratings[id];
     localStorage.setItem('sb-ratings', JSON.stringify(App.ratings));
+    Ratings.submit(id, previous, 0); // remove from Firestore aggregate
     resetStarHover(id);
     updateRatingDisplay(id, 0);
     syncRatingUI(id, 0);
@@ -841,9 +1024,10 @@ function setRating(id, n) {
 
   App.ratings[id] = n;
   localStorage.setItem('sb-ratings', JSON.stringify(App.ratings));
+  Ratings.submit(id, previous, n); // update Firestore aggregate
   applyStars(id, n, true);
   syncRatingUI(id, n);
-  toast(`Rated ${n}/5 — ${STAR_LABELS[n]}! ${'★'.repeat(n)}`);
+  toast('Rated ' + n + '/5 — ' + STAR_LABELS[n] + '! ' + '★'.repeat(n));
 }
 
 // Updates the hero badge + sidebar widget live after a rating is set/changed
@@ -1163,22 +1347,46 @@ function initFadeIns(root = document) {
 
 // ── What's New Banner ─────────────────────────────────
 function renderWhatsNew() {
-  if (localStorage.getItem('sb-banner-dismissed') === 'true') return '';
+  if (!App.solutions.length) return '';
+
+  // Sort by lastUpdated descending, take the 2 most recent
+  const recent = [...App.solutions]
+    .sort((a, b) => new Date(b.lastUpdated) - new Date(a.lastUpdated))
+    .slice(0, 2);
+
+  // Build a dismissal key from the two latest solution IDs + versions
+  // If anything changes (new solution added, version bumped) the banner reappears
+  const bannerKey = recent.map(s => s.id + '-' + s.version).join('|');
+  const dismissedKey = localStorage.getItem('sb-banner-key');
+  if (dismissedKey === bannerKey) return '';
+
+  // Build the message text
+  let message = '';
+  if (recent.length === 2) {
+    message = recent[0].title + ' v' + recent[0].version +
+              ' and ' + recent[1].title + ' v' + recent[1].version + ' just added';
+  } else if (recent.length === 1) {
+    message = recent[0].title + ' v' + recent[0].version + ' just added';
+  } else {
+    return '';
+  }
+
   return `
-    <div class="whats-new-banner" id="whats-new">
+    <div class="whats-new-banner" id="whats-new" onclick="App.activeFilter='all'; applyFilters(); showView('solutions')" style="cursor:pointer">
       <span class="whats-new-icon">🎉</span>
       <div class="whats-new-text">
         <div class="whats-new-label">What's New</div>
-        <div class="whats-new-title">IT Helpdesk Teams Bot v2.3 and M365 Audit Reporter v3.1 just added</div>
+        <div class="whats-new-title">${message}</div>
       </div>
-      <button class="whats-new-close" onclick="dismissBanner(event)" aria-label="Dismiss">✕</button>
+      <button class="whats-new-close" onclick="dismissBanner(event, '${bannerKey}')" aria-label="Dismiss">✕</button>
     </div>`;
 }
 
-function dismissBanner(e) {
+function dismissBanner(e, key) {
   e.stopPropagation();
   document.getElementById('whats-new')?.remove();
-  localStorage.setItem('sb-banner-dismissed', 'true');
+  // Store the specific key so the banner reappears when new solutions are added
+  localStorage.setItem('sb-banner-key', key);
 }
 
 // ── Active Filter Pills ───────────────────────────────
