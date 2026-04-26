@@ -5,17 +5,14 @@
 ===================================================== */
 
 // ── Firebase Config ────────────────────────────────
-// Replace these values with your own Firebase project config
-// See: https://console.firebase.google.com → Project Settings → Your apps → SDK setup
-const FIREBASE_CONFIG = {
-  apiKey:            "AIzaSyAKB7Uy4moVJEzcvRC2vH9-1TbJG__pIuo",
-  authDomain: "solutionbase-a6ba1.firebaseapp.com",
-  projectId: "solutionbase-a6ba1",
-  storageBucket: "solutionbase-a6ba1.firebasestorage.app",
-  messagingSenderId: "786578719167",
-  appId: "1:786578719167:web:828fb0039db071bc49610a",
-  measurementId: "G-YVVXE4XQEL"
-};
+// Config is loaded from firebase-config.js which is listed in .gitignore
+// and never committed to the repository.
+// window.FIREBASE_CONFIG is set by that file before this script runs.
+// If the file is missing or has placeholder values, ratings fall back to local only.
+const FIREBASE_CONFIG = (typeof window.FIREBASE_CONFIG !== 'undefined' &&
+  window.FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY')
+  ? window.FIREBASE_CONFIG
+  : null;
 
 // ── Shared Ratings Module ──────────────────────────
 // Handles reading/writing aggregate ratings to Firebase Firestore
@@ -32,7 +29,7 @@ const Ratings = {
 
   // Returns true if Firebase has been configured with real values
   isConfigured() {
-    return FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY' && this.db !== null;
+    return FIREBASE_CONFIG !== null && this.db !== null;
   },
 
   // Subscribe to live aggregate rating for a solution
@@ -147,9 +144,8 @@ async function boot() {
   App.filtered = [...App.solutions];
 
   // ── Initialize Firebase (shared ratings) ──────────
-  // Only activates if FIREBASE_CONFIG has been filled in with real values
   try {
-    if (typeof firebase !== 'undefined' && FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY') {
+    if (typeof firebase !== 'undefined' && FIREBASE_CONFIG !== null) {
       firebase.initializeApp(FIREBASE_CONFIG);
       Ratings.init(firebase.firestore());
     }
@@ -405,63 +401,112 @@ function renderGrid() {
 function cardHTML(s, delay = 0) {
   const color = s.color || '#0078d4';
   const userRating = App.ratings[s.id];
-
-  // Community aggregate (from cache — populated after visiting detail page)
   const comm = Ratings.get(s.id);
-  const commText = comm.count > 0
-    ? comm.avg.toFixed(1) + ' ★ (' + comm.count + ' rating' + (comm.count !== 1 ? 's' : '') + ')'
-    : Ratings.isConfigured() ? 'No ratings yet' : '';
 
-  // Rating block shown between tags and footer
-  const ratingBlock = userRating
-    ? `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--border); margin-top:4px; flex-wrap:wrap; gap:6px;">
-         <div style="display:flex; align-items:center; gap:6px;">
-           <span style="color:#f59e0b; font-size:0.95rem; letter-spacing:1px; line-height:1;">${'★'.repeat(userRating)}${'☆'.repeat(5 - userRating)}</span>
-           <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary);">Your rating: ${userRating}/5</span>
-         </div>
-         ${commText ? `<span style="font-family:var(--font-mono); font-size:0.67rem; color:#f59e0b; font-weight:600;">${commText}</span>` : ''}
+  const commText = comm.count > 0
+    ? comm.avg.toFixed(1) + ' ★ (' + comm.count + ')'
+    : '';
+
+  const ratingRow = userRating
+    ? `<div class="card3d-rating rated">
+         <span class="card3d-stars">${'★'.repeat(userRating)}${'☆'.repeat(5 - userRating)}</span>
+         <span class="card3d-rating-label">Your rating: ${userRating}/5</span>
+         ${commText ? `<span class="card3d-comm-rating">${commText}</span>` : ''}
        </div>`
-    : `<div style="display:flex; align-items:center; justify-content:space-between; padding:8px 0; border-top:1px solid var(--border); margin-top:4px; flex-wrap:wrap; gap:4px;">
-         <div style="display:flex; align-items:center; gap:6px;">
-           <span style="color:var(--border-strong); font-size:0.95rem; letter-spacing:1px; line-height:1;">☆☆☆☆☆</span>
-           <span style="font-family:var(--font-mono); font-size:0.68rem; color:var(--text-tertiary);">Not rated — open to rate</span>
-         </div>
-         ${commText ? `<span style="font-family:var(--font-mono); font-size:0.67rem; color:#f59e0b; font-weight:600;">${commText}</span>` : ''}
+    : `<div class="card3d-rating unrated">
+         <span class="card3d-stars unrated-stars">☆☆☆☆☆</span>
+         <span class="card3d-rating-label">Open to rate</span>
+         ${commText ? `<span class="card3d-comm-rating">${commText}</span>` : ''}
        </div>`;
 
   return `
-    <div class="sol-card" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" style="animation-delay:${delay}ms">
-      <div class="sol-card-top">
-        <div class="sol-card-icon" style="background:${color}18; color:${color}; border:1px solid ${color}28">${s.icon}</div>
-        <div class="sol-card-badges">
-          <span class="badge badge-tool">${s.tool}</span>
-          <span class="badge ${s.status === 'Production Ready' ? 'badge-production' : 'badge-beta'}">${s.status === 'Production Ready' ? 'Prod' : 'Beta'}</span>
+    <div class="card3d-wrap" style="animation-delay:${delay}ms"
+         onmousemove="tiltCard(event, this)"
+         onmouseleave="resetCard(this)"
+         onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+
+      <!-- Glow layer — follows mouse -->
+      <div class="card3d-glow" style="--glow:${color}"></div>
+
+      <!-- Card face -->
+      <div class="card3d" style="--accent:${color}">
+
+        <!-- Top accent bar -->
+        <div class="card3d-bar" style="background:linear-gradient(90deg, ${color}, ${color}88, transparent)"></div>
+
+        <!-- Header row -->
+        <div class="card3d-header">
+          <div class="card3d-icon" style="background:${color}22; border:1px solid ${color}44; color:${color}">
+            ${s.icon}
+          </div>
+          <div class="card3d-badges">
+            <span class="card3d-badge tool">${s.tool}</span>
+            <span class="card3d-badge ${s.status === 'Production Ready' ? 'prod' : 'beta'}">
+              ${s.status === 'Production Ready' ? 'Prod' : 'Beta'}
+            </span>
+          </div>
         </div>
-      </div>
-      <div class="sol-card-title">${s.title}</div>
-      <div class="sol-card-desc">${s.description}</div>
-      <div class="sol-card-tags">
-        ${s.tags.slice(0, 4).map(t => `<span class="tag">${t}</span>`).join('')}
-        ${s.tags.length > 4 ? `<span class="tag">+${s.tags.length - 4}</span>` : ''}
-      </div>
-      ${ratingBlock}
-      <div class="sol-card-footer">
-        <div class="sol-card-meta">
-          <span class="meta-item">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            ${s.stars}
-          </span>
-          <span class="meta-item">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            ${formatNum(s.downloads)}
-          </span>
-          <span class="badge badge-${s.difficulty.toLowerCase()}" style="border:none;background:none;padding:0">${s.difficulty}</span>
+
+        <!-- Title -->
+        <div class="card3d-title">${s.title}</div>
+
+        <!-- Description -->
+        <div class="card3d-desc">${s.description}</div>
+
+        <!-- Tags -->
+        <div class="card3d-tags">
+          ${s.tags.slice(0, 3).map(t => `<span class="card3d-tag">${t}</span>`).join('')}
+          ${s.tags.length > 3 ? `<span class="card3d-tag muted">+${s.tags.length - 3}</span>` : ''}
         </div>
-        <div class="sol-card-arrow">
-          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+
+        <!-- Rating row -->
+        ${ratingRow}
+
+        <!-- Footer -->
+        <div class="card3d-footer">
+          <div class="card3d-meta">
+            <span class="card3d-meta-item">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+              ${s.stars}
+            </span>
+            <span class="card3d-meta-item">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              ${formatNum(s.downloads)}
+            </span>
+            <span class="card3d-diff card3d-diff-${s.difficulty.toLowerCase()}">${s.difficulty}</span>
+          </div>
+          <div class="card3d-arrow">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
+          </div>
         </div>
+
       </div>
     </div>`;
+}
+
+// ── 3D tilt effect ──────────────────────────────────
+function tiltCard(e, wrap) {
+  const rect = wrap.getBoundingClientRect();
+  const x = e.clientX - rect.left;
+  const y = e.clientY - rect.top;
+  const cx = rect.width  / 2;
+  const cy = rect.height / 2;
+  const rotX =  (y - cy) / cy * -8;   // max ±8 deg
+  const rotY =  (x - cx) / cx *  8;
+
+  const card = wrap.querySelector('.card3d');
+  const glow = wrap.querySelector('.card3d-glow');
+
+  card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(8px)`;
+  glow.style.opacity = '1';
+  glow.style.transform = `translate(${(x / rect.width) * 60 - 30}%, ${(y / rect.height) * 60 - 30}%)`;
+}
+
+function resetCard(wrap) {
+  const card = wrap.querySelector('.card3d');
+  const glow = wrap.querySelector('.card3d-glow');
+  card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+  glow.style.opacity = '0';
 }
 
 // ── Detail View ─────────────────────────────────────
