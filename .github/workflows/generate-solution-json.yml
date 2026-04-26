@@ -158,8 +158,6 @@ jobs:
           git commit -m "feat: add '${{ steps.patch.outputs.solution_title }}' (closes #${{ steps.patch.outputs.issue_number }})"
           git push origin "$BRANCH"
 
-          echo "BRANCH=$BRANCH" >> $GITHUB_ENV
-
       # ── 4. Open a Pull Request ────────────────────────────────────────────
       - name: Open Pull Request
         if: steps.patch.outputs.skipped == 'false'
@@ -169,8 +167,11 @@ jobs:
             const issueNumber   = parseInt('${{ steps.patch.outputs.issue_number }}', 10);
             const solutionId    = '${{ steps.patch.outputs.solution_id }}';
             const solutionTitle = '${{ steps.patch.outputs.solution_title }}';
-            const branch        = process.env.BRANCH;
             const readmePath    = 'solutions/' + solutionId + '/README.md';
+
+            // Reconstruct branch name from outputs — never read from env
+            // so re-running this step alone works correctly
+            const branch = 'solution/add-' + solutionId + '-issue-' + issueNumber;
 
             // Build PR body with plain string concatenation — zero backticks used
             const prBody = [
