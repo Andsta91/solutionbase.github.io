@@ -14,113 +14,123 @@ jobs:
     runs-on: ubuntu-latest
 
     permissions:
-      contents: write      # needed to push a branch
-      pull-requests: write # needed to open a PR
-      issues: write        # needed to comment on the issue
+      contents: write
+      pull-requests: write
+      issues: write
 
     steps:
 
-      # ── 1. Check out the repo ──────────────────────
+      # ── 1. Check out the repo ──────────────────────────────────────────────
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      # ── 2. Parse issue → generate JSON → patch solutions.json ──
+      # ── 2. Parse issue → build JSON → patch solutions.json ────────────────
       - name: Parse issue and patch solutions.json
         uses: actions/github-script@v7
         id: patch
         with:
           script: |
             const fs = require('fs');
-            const body = context.payload.issue.body;
+            const body        = context.payload.issue.body || '';
             const issueNumber = context.payload.issue.number;
-            const issueTitle  = context.payload.issue.title;
+            const issueTitle  = context.payload.issue.title || '';
 
-            // ── Helper: pull a field value out of the GitHub issue form body ──
+            // Helper: extract a field value from the GitHub issue form body
             function extract(label) {
-              const regex = new RegExp(
-                `### ${label}\\s*\\n+([\\s\\S]*?)(?=\\n###|$)`, 'i'
-              );
-              const match = body.match(regex);
+              const regex = new RegExp('### ' + label + '\\s*\\n+([\\s\\S]*?)(?=\\n###|$)', 'i');
+              const match  = body.match(regex);
               return match ? match[1].trim() : '';
             }
 
-            // ── Pull every field ──
-            const title      = extract('Solution Title') || issueTitle.replace('[Solution]','').trim();
+            // Pull every field from the form
+            const title      = extract('Solution Title') || issueTitle.replace('[Solution]', '').trim();
             const tool       = extract('Primary Tool / Category');
             const difficulty = extract('Difficulty Level');
             const status     = extract('Status');
             const version    = extract('Version') || '1.0.0';
-            const desc       = extract('Short Description').replace(/\n/g,' ');
-            const icon       = extract('Icon \\(single emoji\\)') || '📦';
-            const color      = extract('Accent Color \\(hex\\)')  || '#0078d4';
+            const desc       = extract('Short Description').replace(/\n/g, ' ');
+            const icon       = extract('Icon .single emoji.') || '📦';
+            const color      = extract('Accent Color .hex.')  || '#0078d4';
             const repoUrl    = extract('GitHub Repository URL');
             const pkgUrl     = extract('Download / Package URL');
             const tagsRaw    = extract('Tags');
             const featRaw    = extract('Key Features');
             const compRaw    = extract('Solution Components');
             const prereqRaw  = extract('Prerequisites');
-            const notesRaw   = extract('Additional Notes');
 
-            // ── Process arrays ──
-            const tags = tagsRaw.split(',').map(t => t.trim()).filter(Boolean).slice(0, 6);
+            // Process arrays
+            const tags = tagsRaw
+              .split(',')
+              .map(t => t.trim())
+              .filter(Boolean)
+              .slice(0, 6);
 
-            const features = featRaw.split('\n')
-              .map(l => l.replace(/^[-*]\s*/,'').trim()).filter(Boolean);
+            const features = featRaw
+              .split('\n')
+              .map(l => l.replace(/^[-*]\s*/, '').trim())
+              .filter(Boolean);
 
-            const components = compRaw.split('\n')
-              .map(l => l.replace(/^[-*]\s*/,'').trim()).filter(Boolean)
-              .map(line => {
-                const parts = line.split('|').map(p => p.trim());
-                return parts.length >= 3
-                  ? { type: parts[0], name: parts[1], description: parts[2] }
-                  : { type: 'Unknown', name: line, description: '' };
+            const components = compRaw
+              .split('\n')
+              .map(l => l.replace(/^[-*]\s*/, '').trim())
+              .filter(Boolean)
+              .map(function(line) {
+                const parts = line.split('|').map(function(p) { return p.trim(); });
+                if (parts.length >= 3) {
+                  return { type: parts[0], name: parts[1], description: parts[2] };
+                }
+                return { type: 'Unknown', name: line, description: '' };
               });
 
-            const prerequisites = prereqRaw.split('\n')
-              .map(l => l.replace(/^[-*]\s*/,'').trim()).filter(Boolean);
+            const prerequisites = prereqRaw
+              .split('\n')
+              .map(l => l.replace(/^[-*]\s*/, '').trim())
+              .filter(Boolean);
 
-            // ── Build a URL-safe slug ──
-            const id = title.toLowerCase()
-              .replace(/[^a-z0-9\s-]/g,'')
-              .replace(/\s+/g,'-')
-              .replace(/-+/g,'-')
+            // Build a URL-safe slug from the title
+            const id = title
+              .toLowerCase()
+              .replace(/[^a-z0-9\s-]/g, '')
+              .replace(/\s+/g, '-')
+              .replace(/-+/g, '-')
+              .replace(/^-|-$/g, '')
               .slice(0, 50);
 
             const today = new Date().toISOString().split('T')[0];
 
-            // ── Build the solution object ──
+            // Build the full solution object — using string concatenation, no backticks
             const solution = {
-              id,
-              title,
-              tool,
-              tags,
-              difficulty,
-              status,
-              version,
-              lastUpdated: today,
-              stars: 0,
-              downloads: 0,
-              featured: false,
-              icon,
-              color,
-              description: desc,
-              readmePath:  `solutions/${id}/README.md`,
-              packagePath: pkgUrl,
-              githubRepo:  repoUrl,
-              features,
-              components,
-              prerequisites,
-              issueRef: issueNumber
+              id:           id,
+              title:        title,
+              tool:         tool,
+              tags:         tags,
+              difficulty:   difficulty,
+              status:       status,
+              version:      version,
+              lastUpdated:  today,
+              stars:        0,
+              downloads:    0,
+              featured:     false,
+              icon:         icon,
+              color:        color,
+              description:  desc,
+              readmePath:   'solutions/' + id + '/README.md',
+              packagePath:  pkgUrl,
+              githubRepo:   repoUrl,
+              features:     features,
+              components:   components,
+              prerequisites: prerequisites,
+              issueRef:     issueNumber
             };
 
-            // ── Read, append, write solutions.json ──
+            // Read existing solutions.json, guard duplicates, append and write
             const jsonPath = 'data/solutions.json';
             const existing = JSON.parse(fs.readFileSync(jsonPath, 'utf8'));
 
-            // Guard against duplicate IDs
-            if (existing.some(s => s.id === id)) {
-              core.setOutput('skipped', 'true');
-              core.setOutput('skip_reason', `Solution with id "${id}" already exists.`);
+            if (existing.some(function(s) { return s.id === id; })) {
+              core.setOutput('skipped',      'true');
+              core.setOutput('skip_reason',  'Solution with id "' + id + '" already exists in solutions.json.');
+              core.setOutput('issue_number', String(issueNumber));
               return;
             }
 
@@ -132,92 +142,113 @@ jobs:
             core.setOutput('issue_number',   String(issueNumber));
             core.setOutput('skipped',        'false');
 
-      # ── 3. Commit the changed file to a new branch ──
+      # ── 3. Commit the patched file to a new branch ────────────────────────
       - name: Commit patched solutions.json
         if: steps.patch.outputs.skipped == 'false'
         run: |
           git config user.name  "SolutionBase Bot"
-          git config user.email "bot@solutionbase"
-          BRANCH="solution/add-${{ steps.patch.outputs.solution_id }}-issue-${{ steps.patch.outputs.issue_number }}"
+          git config user.email "bot@solutionbase.io"
+
+          SOLUTION_ID="${{ steps.patch.outputs.solution_id }}"
+          ISSUE_NUM="${{ steps.patch.outputs.issue_number }}"
+          BRANCH="solution/add-${SOLUTION_ID}-issue-${ISSUE_NUM}"
+
           git checkout -b "$BRANCH"
           git add data/solutions.json
-          git commit -m "feat: add solution '${{ steps.patch.outputs.solution_title }}' (closes #${{ steps.patch.outputs.issue_number }})"
+          git commit -m "feat: add '${{ steps.patch.outputs.solution_title }}' (closes #${{ steps.patch.outputs.issue_number }})"
           git push origin "$BRANCH"
+
           echo "BRANCH=$BRANCH" >> $GITHUB_ENV
 
-      # ── 4. Open a Pull Request ─────────────────────
+      # ── 4. Open a Pull Request ────────────────────────────────────────────
       - name: Open Pull Request
         if: steps.patch.outputs.skipped == 'false'
         uses: actions/github-script@v7
         with:
           script: |
+            const issueNumber   = parseInt('${{ steps.patch.outputs.issue_number }}', 10);
+            const solutionId    = '${{ steps.patch.outputs.solution_id }}';
+            const solutionTitle = '${{ steps.patch.outputs.solution_title }}';
+            const branch        = process.env.BRANCH;
+            const readmePath    = 'solutions/' + solutionId + '/README.md';
+
+            // Build PR body with plain string concatenation — zero backticks used
+            const prBody = [
+              '## New Solution: ' + solutionTitle,
+              '',
+              'Automatically generated from issue #' + issueNumber + '.',
+              '',
+              '### What this PR does',
+              '- Appends the new entry to data/solutions.json',
+              '- Does **not** create the solution folder — the submitter must supply their own README and package file',
+              '',
+              '### Before merging, verify',
+              '- [ ] JSON entry looks correct (title, description, tags, links)',
+              '- [ ] The githubRepo link is publicly accessible',
+              '- [ ] The packagePath download link works',
+              '- [ ] A ' + readmePath + ' exists or is linked in the issue',
+              '',
+              'Closes #' + issueNumber
+            ].join('\n');
+
             const { data: pr } = await github.rest.pulls.create({
               owner: context.repo.owner,
               repo:  context.repo.repo,
-              title: `✅ Add solution: ${{ steps.patch.outputs.solution_title }}`,
-              head:  process.env.BRANCH,
+              title: 'Add solution: ' + solutionTitle,
+              head:  branch,
               base:  'main',
-              body: [
-                `## New Solution: ${{ steps.patch.outputs.solution_title }}`,
-                '',
-                `Automatically generated from issue #${{ steps.patch.outputs.issue_number }}.`,
-                '',
-                '### What this PR does',
-                '- Appends the new solution entry to `data/solutions.json`',
-                '- **Does NOT** create the `solutions/<id>/` folder — the submitter must supply their own `README.md` and `package.zip`',
-                '',
-                '### Before merging, verify',
-                '- [ ] The JSON entry looks correct (title, description, tags, links)',
-                '- [ ] The `githubRepo` link is real and publicly accessible',
-                '- [ ] The `packagePath` download link works',
-                `- [ ] Issue #${{ steps.patch.outputs.issue_number }} has a `solutions/${{ steps.patch.outputs.solution_id }}/README.md\` attached or linked`,
-                '',
-                `Closes #${{ steps.patch.outputs.issue_number }}`
-              ].join('\n')
+              body:  prBody
             });
 
-            // Post link back to the original issue
+            // Comment on the issue with a link to the PR
+            const commentBody = [
+              '## Pull Request Created',
+              '',
+              'A PR has been opened automatically:',
+              '[#' + pr.number + ' ' + pr.title + '](' + pr.html_url + ')',
+              '',
+              'Once the maintainer reviews and merges it, the solution will appear on the site immediately.',
+              '',
+              '_No manual JSON editing required._'
+            ].join('\n');
+
             await github.rest.issues.createComment({
               owner:        context.repo.owner,
               repo:         context.repo.repo,
-              issue_number: ${{ steps.patch.outputs.issue_number }},
-              body: [
-                '## 🚀 Pull Request Created',
-                '',
-                `A PR has been opened automatically to add this solution to the library:`,
-                `**[#${pr.number} — ${pr.title}](${pr.html_url})**`,
-                '',
-                'Once you review and merge the PR, the solution will appear on the site immediately.',
-                '',
-                '_No manual JSON editing required._'
-              ].join('\n')
+              issue_number: issueNumber,
+              body:         commentBody
             });
 
-            // Add label to issue
+            // Tag the issue so you can filter by status
             await github.rest.issues.addLabels({
               owner:        context.repo.owner,
               repo:         context.repo.repo,
-              issue_number: ${{ steps.patch.outputs.issue_number }},
+              issue_number: issueNumber,
               labels:       ['pr-opened']
             });
 
-      # ── 5. Handle duplicate / skip case ───────────
+      # ── 5. Handle duplicate / skip ────────────────────────────────────────
       - name: Comment on duplicate
         if: steps.patch.outputs.skipped == 'true'
         uses: actions/github-script@v7
         with:
           script: |
+            const issueNumber = parseInt('${{ steps.patch.outputs.issue_number }}', 10);
+            const skipReason  = '${{ steps.patch.outputs.skip_reason }}';
+
+            const body = [
+              '## Duplicate ID Detected',
+              '',
+              'A solution with this ID already exists in data/solutions.json.',
+              '',
+              'Reason: ' + skipReason,
+              '',
+              'To fix: edit the issue title to use a unique name, then remove the approved label and re-add it to re-run the workflow.'
+            ].join('\n');
+
             await github.rest.issues.createComment({
               owner:        context.repo.owner,
               repo:         context.repo.repo,
-              issue_number: ${{ steps.patch.outputs.issue_number }},
-              body: [
-                '## ⚠️ Duplicate ID Detected',
-                '',
-                `A solution with this ID already exists in \`data/solutions.json\`.`,
-                '',
-                'Reason: `${{ steps.patch.outputs.skip_reason }}`',
-                '',
-                'Please edit the issue title to use a unique name, then remove and re-add the `approved` label to re-run.'
-              ].join('\n')
+              issue_number: issueNumber,
+              body:         body
             });
