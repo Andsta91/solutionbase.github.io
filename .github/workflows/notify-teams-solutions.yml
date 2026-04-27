@@ -9,7 +9,7 @@ on:
       - master
 
 jobs:
-  notify-teams:
+  notify-team:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -21,19 +21,14 @@ jobs:
         id: changed-files
         run: |
           if [ ${{ github.event.before }} == "0000000000000000000000000000000000000000" ]; then
-            # Initial commit - get all solutions files
             git diff --name-only --diff-filter=A $(git rev-parse HEAD) | grep '^solutions/' > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
           else
-            # Regular push - get diff
             git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^solutions/' > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
           fi
-          
-          cat /tmp/changed_files.txt
 
       - name: Extract solution details
         id: solution
         run: |
-          # Read changed files
           CHANGED=$(cat /tmp/changed_files.txt)
           
           if [ -z "$CHANGED" ]; then
@@ -42,130 +37,129 @@ jobs:
           fi
           
           echo "has_changes=true" >> $GITHUB_OUTPUT
-          
-          # Get first solution folder (most recently added)
           FIRST_FILE=$(echo "$CHANGED" | head -1)
           SOLUTION_PATH=$(echo "$FIRST_FILE" | cut -d'/' -f1-2)
           SOLUTION_NAME=$(echo "$SOLUTION_PATH" | cut -d'/' -f2)
-          
-          # Count total files added in solutions folder
           FILE_COUNT=$(echo "$CHANGED" | wc -l)
           
-          # Detect solution type based on folder name
           if [[ "$SOLUTION_NAME" == *"power-app"* ]] || [[ "$SOLUTION_NAME" == *"app"* ]]; then
-            SOLUTION_TYPE="📱 Power Apps"
+            SOLUTION_TYPE="Power Apps"
             THEME_COLOR="0078D4"
           elif [[ "$SOLUTION_NAME" == *"automate"* ]] || [[ "$SOLUTION_NAME" == *"flow"* ]]; then
-            SOLUTION_TYPE="⚡ Power Automate"
+            SOLUTION_TYPE="Power Automate"
             THEME_COLOR="00A4EF"
           elif [[ "$SOLUTION_NAME" == *"sharepoint"* ]] || [[ "$SOLUTION_NAME" == *"spfx"* ]]; then
-            SOLUTION_TYPE="🏢 SharePoint"
+            SOLUTION_TYPE="SharePoint"
             THEME_COLOR="0078D4"
           elif [[ "$SOLUTION_NAME" == *"powershell"* ]] || [[ "$SOLUTION_NAME" == *"ps"* ]]; then
-            SOLUTION_TYPE="💻 PowerShell"
+            SOLUTION_TYPE="PowerShell"
             THEME_COLOR="017CFF"
           else
-            SOLUTION_TYPE="🔧 Power Platform Solution"
+            SOLUTION_TYPE="Power Platform Solution"
             THEME_COLOR="0078D4"
           fi
           
           echo "solution_name=$SOLUTION_NAME" >> $GITHUB_OUTPUT
           echo "solution_type=$SOLUTION_TYPE" >> $GITHUB_OUTPUT
-          echo "solution_path=$SOLUTION_PATH" >> $GITHUB_OUTPUT
-          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
           echo "theme_color=$THEME_COLOR" >> $GITHUB_OUTPUT
-          echo "commit_sha=${{ github.event.head_commit.id }}" >> $GITHUB_OUTPUT
-          echo "commit_msg=${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
           echo "commit_author=${{ github.event.head_commit.author.name }}" >> $GITHUB_OUTPUT
+          echo "commit_msg=${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
           echo "commit_url=${{ github.event.head_commit.url }}" >> $GITHUB_OUTPUT
 
       - name: Send Teams Notification
         if: steps.solution.outputs.has_changes == 'true'
+        env:
+          SOLUTION_NAME: ${{ steps.solution.outputs.solution_name }}
+          SOLUTION_TYPE: ${{ steps.solution.outputs.solution_type }}
+          THEME_COLOR: ${{ steps.solution.outputs.theme_color }}
+          FILE_COUNT: ${{ steps.solution.outputs.file_count }}
+          AUTHOR: ${{ steps.solution.outputs.commit_author }}
+          COMMIT_MSG: ${{ steps.solution.outputs.commit_msg }}
+          COMMIT_URL: ${{ steps.solution.outputs.commit_url }}
+          REPO: ${{ github.repository }}
+          BRANCH: ${{ github.ref_name }}
         run: |
-          TEAMS_WEBHOOK="${{ secrets.TEAMS_WEBHOOK_URL }}"
-          
-          curl -X POST "$TEAMS_WEBHOOK" \
+          cat > /tmp/teams_payload.json << 'PAYLOAD_EOF'
+          {
+            "@type": "MessageCard",
+            "@context": "https://schema.org/extensions",
+            "summary": "New Solution Added",
+            "themeColor": "THEME_COLOR_PLACEHOLDER",
+            "title": "🆕 New Solution Added to SolutionBase",
+            "sections": [
+              {
+                "activityTitle": "SOLUTION_TYPE_PLACEHOLDER",
+                "activitySubtitle": "SOLUTION_NAME_PLACEHOLDER",
+                "facts": [
+                  {
+                    "name": "📦 Solution Name:",
+                    "value": "SOLUTION_NAME_PLACEHOLDER"
+                  },
+                  {
+                    "name": "🏷️ Type:",
+                    "value": "SOLUTION_TYPE_PLACEHOLDER"
+                  },
+                  {
+                    "name": "👤 Added By:",
+                    "value": "AUTHOR_PLACEHOLDER"
+                  },
+                  {
+                    "name": "📂 Files Changed:",
+                    "value": "FILE_COUNT_PLACEHOLDER file(s)"
+                  },
+                  {
+                    "name": "💬 Commit Message:",
+                    "value": "COMMIT_MSG_PLACEHOLDER"
+                  },
+                  {
+                    "name": "📍 Repository:",
+                    "value": "REPO_PLACEHOLDER"
+                  }
+                ],
+                "markdown": true
+              }
+            ],
+            "potentialAction": [
+              {
+                "@type": "OpenUri",
+                "name": "📖 View Solution",
+                "targets": [
+                  {
+                    "os": "default",
+                    "uri": "https://github.com/REPO_PLACEHOLDER/tree/BRANCH_PLACEHOLDER/solutions/SOLUTION_NAME_PLACEHOLDER"
+                  }
+                ]
+              },
+              {
+                "@type": "OpenUri",
+                "name": "🔗 View Commit",
+                "targets": [
+                  {
+                    "os": "default",
+                    "uri": "COMMIT_URL_PLACEHOLDER"
+                  }
+                ]
+              }
+            ]
+          }
+          PAYLOAD_EOF
+
+          # Replace placeholders
+          sed -i "s|THEME_COLOR_PLACEHOLDER|$THEME_COLOR|g" /tmp/teams_payload.json
+          sed -i "s|SOLUTION_TYPE_PLACEHOLDER|$SOLUTION_TYPE|g" /tmp/teams_payload.json
+          sed -i "s|SOLUTION_NAME_PLACEHOLDER|$SOLUTION_NAME|g" /tmp/teams_payload.json
+          sed -i "s|AUTHOR_PLACEHOLDER|$AUTHOR|g" /tmp/teams_payload.json
+          sed -i "s|FILE_COUNT_PLACEHOLDER|$FILE_COUNT|g" /tmp/teams_payload.json
+          sed -i "s|COMMIT_MSG_PLACEHOLDER|$COMMIT_MSG|g" /tmp/teams_payload.json
+          sed -i "s|REPO_PLACEHOLDER|$REPO|g" /tmp/teams_payload.json
+          sed -i "s|BRANCH_PLACEHOLDER|$BRANCH|g" /tmp/teams_payload.json
+          sed -i "s|COMMIT_URL_PLACEHOLDER|$COMMIT_URL|g" /tmp/teams_payload.json
+
+          # Send to Teams
+          curl -X POST "${{ secrets.TEAMS_WEBHOOK_URL }}" \
             -H 'Content-Type: application/json' \
-            -d '{
-              "@type": "MessageCard",
-              "@context": "https://schema.org/extensions",
-              "summary": "New Solution Added: ${{ steps.solution.outputs.solution_name }}",
-              "themeColor": "${{ steps.solution.outputs.theme_color }}",
-              "title": "🆕 New Solution Added to SolutionBase",
-              "sections": [
-                {
-                  "activityTitle": "${{ steps.solution.outputs.solution_type }}",
-                  "activitySubtitle": "${{ steps.solution.outputs.solution_name }}",
-                  "facts": [
-                    {
-                      "name": "📦 Solution Name:",
-                      "value": "${{ steps.solution.outputs.solution_name }}"
-                    },
-                    {
-                      "name": "🏷️ Type:",
-                      "value": "${{ steps.solution.outputs.solution_type }}"
-                    },
-                    {
-                      "name": "👤 Added By:",
-                      "value": "${{ steps.solution.outputs.commit_author }}"
-                    },
-                    {
-                      "name": "📂 Files:",
-                      "value": "${{ steps.solution.outputs.file_count }} file(s)"
-                    },
-                    {
-                      "name": "💬 Commit Message:",
-                      "value": "${{ steps.solution.outputs.commit_msg }}"
-                    },
-                    {
-                      "name": "🔗 Commit:",
-                      "value": "${{ steps.solution.outputs.commit_sha }}"
-                    },
-                    {
-                      "name": "📍 Repository:",
-                      "value": "${{ github.repository }}"
-                    },
-                    {
-                      "name": "⏰ Time:",
-                      "value": "'$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
-                    }
-                  ],
-                  "markdown": true
-                }
-              ],
-              "potentialAction": [
-                {
-                  "@type": "OpenUri",
-                  "name": "📖 View Solution",
-                  "targets": [
-                    {
-                      "os": "default",
-                      "uri": "https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}/solutions/${{ steps.solution.outputs.solution_name }}"
-                    }
-                  ]
-                },
-                {
-                  "@type": "OpenUri",
-                  "name": "🔗 View Commit",
-                  "targets": [
-                    {
-                      "os": "default",
-                      "uri": "${{ steps.solution.outputs.commit_url }}"
-                    }
-                  ]
-                },
-                {
-                  "@type": "OpenUri",
-                  "name": "📚 All Solutions",
-                  "targets": [
-                    {
-                      "os": "default",
-                      "uri": "https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}/solutions"
-                    }
-                  ]
-                }
-              ]
-            }'
+            -d @/tmp/teams_payload.json
 
       - name: Log notification status
         if: always()
