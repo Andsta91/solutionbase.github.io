@@ -1,0 +1,172 @@
+name: 🔔 Notify Teams - New Solutions
+
+on:
+  push:
+    paths:
+      - 'solutions/**'
+    branches:
+      - main
+      - master
+
+jobs:
+  notify-teams:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+
+      - name: Get changed files
+        id: changed-files
+        run: |
+          if [ ${{ github.event.before }} == "0000000000000000000000000000000000000000" ]; then
+            # Initial commit - get all solutions files
+            git diff --name-only --diff-filter=A $(git rev-parse HEAD) | grep '^solutions/' > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          else
+            # Regular push - get diff
+            git diff --name-only ${{ github.event.before }} ${{ github.event.after }} | grep '^solutions/' > /tmp/changed_files.txt || echo "" > /tmp/changed_files.txt
+          fi
+          
+          cat /tmp/changed_files.txt
+
+      - name: Extract solution details
+        id: solution
+        run: |
+          # Read changed files
+          CHANGED=$(cat /tmp/changed_files.txt)
+          
+          if [ -z "$CHANGED" ]; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+          
+          echo "has_changes=true" >> $GITHUB_OUTPUT
+          
+          # Get first solution folder (most recently added)
+          FIRST_FILE=$(echo "$CHANGED" | head -1)
+          SOLUTION_PATH=$(echo "$FIRST_FILE" | cut -d'/' -f1-2)
+          SOLUTION_NAME=$(echo "$SOLUTION_PATH" | cut -d'/' -f2)
+          
+          # Count total files added in solutions folder
+          FILE_COUNT=$(echo "$CHANGED" | wc -l)
+          
+          # Detect solution type based on folder name
+          if [[ "$SOLUTION_NAME" == *"power-app"* ]] || [[ "$SOLUTION_NAME" == *"app"* ]]; then
+            SOLUTION_TYPE="📱 Power Apps"
+            THEME_COLOR="0078D4"
+          elif [[ "$SOLUTION_NAME" == *"automate"* ]] || [[ "$SOLUTION_NAME" == *"flow"* ]]; then
+            SOLUTION_TYPE="⚡ Power Automate"
+            THEME_COLOR="00A4EF"
+          elif [[ "$SOLUTION_NAME" == *"sharepoint"* ]] || [[ "$SOLUTION_NAME" == *"spfx"* ]]; then
+            SOLUTION_TYPE="🏢 SharePoint"
+            THEME_COLOR="0078D4"
+          elif [[ "$SOLUTION_NAME" == *"powershell"* ]] || [[ "$SOLUTION_NAME" == *"ps"* ]]; then
+            SOLUTION_TYPE="💻 PowerShell"
+            THEME_COLOR="017CFF"
+          else
+            SOLUTION_TYPE="🔧 Power Platform Solution"
+            THEME_COLOR="0078D4"
+          fi
+          
+          echo "solution_name=$SOLUTION_NAME" >> $GITHUB_OUTPUT
+          echo "solution_type=$SOLUTION_TYPE" >> $GITHUB_OUTPUT
+          echo "solution_path=$SOLUTION_PATH" >> $GITHUB_OUTPUT
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
+          echo "theme_color=$THEME_COLOR" >> $GITHUB_OUTPUT
+          echo "commit_sha=${{ github.event.head_commit.id }}" >> $GITHUB_OUTPUT
+          echo "commit_msg=${{ github.event.head_commit.message }}" >> $GITHUB_OUTPUT
+          echo "commit_author=${{ github.event.head_commit.author.name }}" >> $GITHUB_OUTPUT
+          echo "commit_url=${{ github.event.head_commit.url }}" >> $GITHUB_OUTPUT
+
+      - name: Send Teams Notification
+        if: steps.solution.outputs.has_changes == 'true'
+        run: |
+          TEAMS_WEBHOOK="${{ secrets.TEAMS_WEBHOOK_URL }}"
+          
+          curl -X POST "$TEAMS_WEBHOOK" \
+            -H 'Content-Type: application/json' \
+            -d '{
+              "@type": "MessageCard",
+              "@context": "https://schema.org/extensions",
+              "summary": "New Solution Added: ${{ steps.solution.outputs.solution_name }}",
+              "themeColor": "${{ steps.solution.outputs.theme_color }}",
+              "title": "🆕 New Solution Added to SolutionBase",
+              "sections": [
+                {
+                  "activityTitle": "${{ steps.solution.outputs.solution_type }}",
+                  "activitySubtitle": "${{ steps.solution.outputs.solution_name }}",
+                  "facts": [
+                    {
+                      "name": "📦 Solution Name:",
+                      "value": "${{ steps.solution.outputs.solution_name }}"
+                    },
+                    {
+                      "name": "🏷️ Type:",
+                      "value": "${{ steps.solution.outputs.solution_type }}"
+                    },
+                    {
+                      "name": "👤 Added By:",
+                      "value": "${{ steps.solution.outputs.commit_author }}"
+                    },
+                    {
+                      "name": "📂 Files:",
+                      "value": "${{ steps.solution.outputs.file_count }} file(s)"
+                    },
+                    {
+                      "name": "💬 Commit Message:",
+                      "value": "${{ steps.solution.outputs.commit_msg }}"
+                    },
+                    {
+                      "name": "🔗 Commit:",
+                      "value": "${{ steps.solution.outputs.commit_sha }}"
+                    },
+                    {
+                      "name": "📍 Repository:",
+                      "value": "${{ github.repository }}"
+                    },
+                    {
+                      "name": "⏰ Time:",
+                      "value": "'$(date -u +'%Y-%m-%d %H:%M:%S UTC')"
+                    }
+                  ],
+                  "markdown": true
+                }
+              ],
+              "potentialAction": [
+                {
+                  "@type": "OpenUri",
+                  "name": "📖 View Solution",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}/solutions/${{ steps.solution.outputs.solution_name }}"
+                    }
+                  ]
+                },
+                {
+                  "@type": "OpenUri",
+                  "name": "🔗 View Commit",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "${{ steps.solution.outputs.commit_url }}"
+                    }
+                  ]
+                },
+                {
+                  "@type": "OpenUri",
+                  "name": "📚 All Solutions",
+                  "targets": [
+                    {
+                      "os": "default",
+                      "uri": "https://github.com/${{ github.repository }}/tree/${{ github.ref_name }}/solutions"
+                    }
+                  ]
+                }
+              ]
+            }'
+
+      - name: Log notification status
+        if: always()
+        run: echo "Teams notification workflow completed"
