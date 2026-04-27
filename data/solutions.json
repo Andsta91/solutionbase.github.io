@@ -626,9 +626,9 @@
     "icon": "🕰️",
     "color": "#4356d1",
     "description": "Automated Communications 14. Renewal Notifications Before: A training provider maintains a record of certification expiry dates. Email are manually sent inviting individuals to renew, making these processes take longer than necessary.  How Power Automate can help: With 45 days left until the certification expiry date, email notifications are triggered, prompting recipients to renew their certifications. Each emails contains instructions, guiding individuals on how to complete their renewal.  <img width=\"462\" height=\"361\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/1fb12f06-633c-4ef6-a550-913906b40bc6\" />",
-    "readmePath": "solutions/flow-tester/README.md",
-    "packagePath": "https://github.com/Andsta91/solutionbase.github.io/solutions/flow tester/package.zip",
-    "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/solutions/flow tester/README.md",
+    "readmePath": "solutions/Flow%20tester/README.md",
+    "packagePath": "solutions/Flow%20tester/package.zip",
+    "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/Flow%20tester/README.md",
     "features": [
       "Automated Communications",
       "14. Renewal Notifications",
