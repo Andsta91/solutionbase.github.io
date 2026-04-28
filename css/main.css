@@ -2128,76 +2128,6 @@ body.dark .card3d-badge.tool {
 }
 
 /* =====================================================
-   COMPARE BUTTON ON CARDS
-===================================================== */
-
-.card3d-compare-btn {
-  position: absolute;
-  top: 10px;
-  right: 10px;
-  z-index: 10;
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--bg-white);
-  font-size: 0.75rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  opacity: 0;
-  transition: opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.card3d-wrap:hover .card3d-compare-btn { opacity: 1; }
-
-.card3d-compare-btn.active {
-  opacity: 1;
-  background: var(--accent-light);
-  border-color: var(--accent-border);
-}
-
-.card3d-compare-btn:hover {
-  transform: scale(1.15);
-  border-color: var(--accent);
-  background: var(--accent-light);
-}
-
-/* =====================================================
-   COMPARE FLOATING BAR
-===================================================== */
-
-.compare-bar {
-  position: fixed;
-  bottom: 0;
-  left: var(--sidebar-w);
-  right: 0;
-  z-index: 90;
-  background: var(--bg-white);
-  border-top: 1px solid var(--border);
-  box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
-  transform: translateY(100%);
-  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
-  padding: 12px 28px;
-}
-
-.compare-bar.visible { transform: translateY(0); }
-
-.compare-bar-inner {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  max-width: var(--max-width, 1280px);
-  margin: 0 auto;
-}
-
-@media (max-width: 900px) {
-  .compare-bar { left: 0; }
-}
-
-/* =====================================================
    RECENTLY VIEWED RESPONSIVE
 ===================================================== */
 
@@ -2215,4 +2145,90 @@ body.dark .card3d-badge.tool {
   .cta-grid {
     grid-template-columns: 1fr !important;
   }
+}
+
+/* =====================================================
+   DEPLOYMENT TRACKER
+===================================================== */
+
+.tracker-list {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.tracker-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 10px 12px;
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  background: var(--bg-white);
+  user-select: none;
+}
+
+.tracker-row:hover {
+  border-color: var(--accent-border);
+  background: var(--accent-light);
+}
+
+.tracker-row.checked {
+  border-color: rgba(26,127,55,0.25);
+  background: var(--green-bg);
+}
+
+body.dark .tracker-row.checked {
+  border-color: rgba(63,185,80,0.25);
+}
+
+.tracker-check {
+  width: 20px;
+  height: 20px;
+  border-radius: 5px;
+  border: 1.5px solid var(--border-strong);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: var(--green);
+  flex-shrink: 0;
+  margin-top: 1px;
+  transition: all 0.15s ease;
+  background: var(--bg-white);
+}
+
+.tracker-row.checked .tracker-check {
+  border-color: var(--green);
+  background: var(--green);
+  color: white;
+}
+
+.tracker-row:hover:not(.checked) .tracker-check {
+  border-color: var(--accent);
+}
+
+.tracker-text {
+  font-size: 0.83rem;
+  font-weight: 500;
+  color: var(--text-primary);
+  line-height: 1.4;
+  transition: color 0.15s ease;
+}
+
+.tracker-row.checked .tracker-text {
+  color: var(--text-tertiary);
+  text-decoration: line-through;
+  text-decoration-color: var(--text-tertiary);
+}
+
+.tracker-sub {
+  display: block;
+  font-size: 0.72rem;
+  color: var(--text-tertiary);
+  margin-top: 2px;
+  line-height: 1.3;
 }
