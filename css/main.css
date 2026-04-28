@@ -2126,3 +2126,93 @@ body.dark .card3d-badge.tool {
   }
   .card3d-glow { display: none; }
 }
+
+/* =====================================================
+   COMPARE BUTTON ON CARDS
+===================================================== */
+
+.card3d-compare-btn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  z-index: 10;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  border: 1px solid var(--border);
+  background: var(--bg-white);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.18s ease, background 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+  box-shadow: var(--shadow-sm);
+}
+
+.card3d-wrap:hover .card3d-compare-btn { opacity: 1; }
+
+.card3d-compare-btn.active {
+  opacity: 1;
+  background: var(--accent-light);
+  border-color: var(--accent-border);
+}
+
+.card3d-compare-btn:hover {
+  transform: scale(1.15);
+  border-color: var(--accent);
+  background: var(--accent-light);
+}
+
+/* =====================================================
+   COMPARE FLOATING BAR
+===================================================== */
+
+.compare-bar {
+  position: fixed;
+  bottom: 0;
+  left: var(--sidebar-w);
+  right: 0;
+  z-index: 90;
+  background: var(--bg-white);
+  border-top: 1px solid var(--border);
+  box-shadow: 0 -4px 24px rgba(0,0,0,0.1);
+  transform: translateY(100%);
+  transition: transform 0.25s cubic-bezier(0.4,0,0.2,1);
+  padding: 12px 28px;
+}
+
+.compare-bar.visible { transform: translateY(0); }
+
+.compare-bar-inner {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: var(--max-width, 1280px);
+  margin: 0 auto;
+}
+
+@media (max-width: 900px) {
+  .compare-bar { left: 0; }
+}
+
+/* =====================================================
+   RECENTLY VIEWED RESPONSIVE
+===================================================== */
+
+@media (max-width: 640px) {
+  #recently-viewed-section .home-section > div {
+    grid-template-columns: 1fr 1fr !important;
+  }
+}
+
+/* =====================================================
+   HOME CTA GRID RESPONSIVE
+===================================================== */
+
+@media (max-width: 580px) {
+  .cta-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
