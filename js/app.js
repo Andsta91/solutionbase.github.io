@@ -107,8 +107,8 @@ const App = {
   darkMode: false,
   comments: {},
   ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),
-  compareList: [],   // kept empty — compare feature removed
-  recentlyViewed: JSON.parse(localStorage.getItem('sb-recent') || '[]')
+  compareList: [],
+  recentlyViewed: JSON.parse(localStorage.getItem('sb-recent') || '[]'),
 
   sampleComments: {
     "employee-onboarding": [
