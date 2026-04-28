@@ -10,7 +10,7 @@
 // window.FIREBASE_CONFIG is set by that file before this script runs.
 // If the file is missing or has placeholder values, ratings fall back to local only.
 const FIREBASE_CONFIG = (typeof window.FIREBASE_CONFIG !== 'undefined' &&
-  window.FIREBASE_CONFIG.apiKey !== 'AIzaSyAKB7Uy4moVJEzcvRC2vH9-1TbJG__pIuo')
+  window.FIREBASE_CONFIG.apiKey !== 'REPLACE_WITH_YOUR_API_KEY')
   ? window.FIREBASE_CONFIG
   : null;
 
@@ -106,7 +106,9 @@ const App = {
   difficultyFilter: '',
   darkMode: false,
   comments: {},
-  ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),  // { solutionId: 1-5 } — user's own ratings
+  ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),
+  compareList: [],   // IDs of solutions selected for comparison (max 3)
+  recentlyViewed: JSON.parse(localStorage.getItem('sb-recent') || '[]') // IDs, most recent first
 
   sampleComments: {
     "employee-onboarding": [
@@ -243,6 +245,11 @@ async function boot() {
   document.querySelectorAll('[data-nav="about"]').forEach(el => {
     el.addEventListener('click', () => { showView('about'); closeMobileMenu(); });
   });
+
+  // Compare nav link
+  document.querySelectorAll('[data-nav="compare"]').forEach(el => {
+    el.addEventListener('click', () => { showView('compare'); closeMobileMenu(); });
+  });
 }
 
 // ── Hash Routing ────────────────────────────────────
@@ -257,6 +264,8 @@ function handleHash() {
     showView('solutions');
   } else if (hash === '#about') {
     showView('about');
+  } else if (hash === '#compare') {
+    showView('compare');
   } else {
     showView('home');
   }
@@ -291,6 +300,11 @@ function showView(view) {
     updateSidebarActive('about');
     history.pushState(null, '', '#about');
     renderAboutView();
+  } else if (view === 'compare') {
+    document.getElementById('view-compare').classList.add('active');
+    updateSidebarActive('compare');
+    history.pushState(null, '', '#compare');
+    renderCompareView();
   }
 
   // Update topbar title
@@ -356,6 +370,9 @@ function renderHome() {
   const wnContainer = document.getElementById('whats-new-container');
   if (wnContainer) wnContainer.innerHTML = renderWhatsNew();
 
+  // Recently Viewed section
+  renderRecentlyViewed();
+
   // Featured grid
   const featuredEl = document.getElementById('featured-grid');
   if (featuredEl) featuredEl.innerHTML = featured.map((s, i) => cardHTML(s, i * 70)).join('');
@@ -398,10 +415,17 @@ function renderGrid() {
   container.innerHTML = App.filtered.map((s, i) => cardHTML(s, i * 40)).join('');
 }
 
+function deployTime(sol) {
+  const mins = sol.components.length * 20 + (sol.difficulty === 'Beginner' ? 0 : sol.difficulty === 'Intermediate' ? 30 : 60);
+  if (mins < 60) return mins + 'm deploy';
+  return (mins / 60).toFixed(1).replace('.0', '') + 'h deploy';
+}
+
 function cardHTML(s, delay = 0) {
   const color = s.color || '#0078d4';
   const userRating = App.ratings[s.id];
   const comm = Ratings.get(s.id);
+  const inCompare = App.compareList.includes(s.id);
 
   const commText = comm.count > 0
     ? comm.avg.toFixed(1) + ' ★ (' + comm.count + ')'
@@ -420,49 +444,42 @@ function cardHTML(s, delay = 0) {
        </div>`;
 
   return `
-    <div class="card3d-wrap" style="animation-delay:${delay}ms"
+    <div class="card3d-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
          onmousemove="tiltCard(event, this)"
          onmouseleave="resetCard(this)"
          onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
 
-      <!-- Glow layer — follows mouse -->
       <div class="card3d-glow" style="--glow:${color}"></div>
 
-      <!-- Card face -->
-      <div class="card3d" style="--accent:${color}">
+      <!-- Compare toggle — top-right corner, stops card click propagation -->
+      <button class="card3d-compare-btn ${inCompare ? 'active' : ''}"
+              title="${inCompare ? 'Remove from comparison' : 'Add to comparison'}"
+              onclick="event.stopPropagation(); toggleCompare('${s.id}')"
+              id="cmp-btn-${s.id}">
+        ⚖️
+      </button>
 
-        <!-- Top accent bar -->
+      <div class="card3d" style="--accent:${color}">
         <div class="card3d-bar" style="background:linear-gradient(90deg, ${color}, ${color}88, transparent)"></div>
 
-        <!-- Header row -->
         <div class="card3d-header">
-          <div class="card3d-icon" style="background:${color}22; border:1px solid ${color}44; color:${color}">
-            ${s.icon}
-          </div>
+          <div class="card3d-icon" style="background:${color}22; border:1px solid ${color}44; color:${color}">${s.icon}</div>
           <div class="card3d-badges">
             <span class="card3d-badge tool">${s.tool}</span>
-            <span class="card3d-badge ${s.status === 'Production Ready' ? 'prod' : 'beta'}">
-              ${s.status === 'Production Ready' ? 'Prod' : 'Beta'}
-            </span>
+            <span class="card3d-badge ${s.status === 'Production Ready' ? 'prod' : 'beta'}">${s.status === 'Production Ready' ? 'Prod' : 'Beta'}</span>
           </div>
         </div>
 
-        <!-- Title -->
         <div class="card3d-title">${s.title}</div>
-
-        <!-- Description -->
         <div class="card3d-desc">${s.description}</div>
 
-        <!-- Tags -->
         <div class="card3d-tags">
           ${s.tags.slice(0, 3).map(t => `<span class="card3d-tag">${t}</span>`).join('')}
           ${s.tags.length > 3 ? `<span class="card3d-tag muted">+${s.tags.length - 3}</span>` : ''}
         </div>
 
-        <!-- Rating row -->
         ${ratingRow}
 
-        <!-- Footer -->
         <div class="card3d-footer">
           <div class="card3d-meta">
             <span class="card3d-meta-item">
@@ -473,6 +490,9 @@ function cardHTML(s, delay = 0) {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               ${formatNum(s.downloads)}
             </span>
+            <span class="card3d-meta-item" title="Estimated deployment time">
+              ⏱ ${deployTime(s)}
+            </span>
             <span class="card3d-diff card3d-diff-${s.difficulty.toLowerCase()}">${s.difficulty}</span>
           </div>
           <div class="card3d-arrow">
@@ -482,7 +502,6 @@ function cardHTML(s, delay = 0) {
 
       </div>
     </div>`;
-}
 
 // ── 3D tilt effect ──────────────────────────────────
 function tiltCard(e, wrap) {
@@ -514,6 +533,10 @@ function openDetail(sol, pushState = true) {
   if (!sol) return;
   App.currentSolution = sol;
   App.currentView = 'detail';
+
+  // Track recently viewed
+  App.recentlyViewed = [sol.id, ...App.recentlyViewed.filter(id => id !== sol.id)].slice(0, 6);
+  localStorage.setItem('sb-recent', JSON.stringify(App.recentlyViewed));
 
   const color = sol.color || '#0078d4';
 
@@ -1391,6 +1414,177 @@ function initFadeIns(root = document) {
 }
 
 // ── What's New Banner ─────────────────────────────────
+// ── Recently Viewed ───────────────────────────────────
+function renderRecentlyViewed() {
+  const container = document.getElementById('recently-viewed-section');
+  if (!container) return;
+
+  const recent = App.recentlyViewed
+    .map(id => App.solutions.find(s => s.id === id))
+    .filter(Boolean)
+    .slice(0, 4);
+
+  if (recent.length === 0) { container.innerHTML = ''; return; }
+
+  container.innerHTML = `
+    <div class="home-section" style="border-bottom:1px solid var(--border); background:var(--bg-subtle);">
+      <div class="home-section-header">
+        <h2 class="home-section-title">🕐 Recently Viewed</h2>
+        <span class="home-section-more" onclick="clearRecentlyViewed()" style="color:var(--text-tertiary)">Clear</span>
+      </div>
+      <div style="display:grid; grid-template-columns:repeat(auto-fill,minmax(220px,1fr)); gap:10px;">
+        ${recent.map(s => `
+          <div onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))"
+               style="display:flex; align-items:center; gap:12px; padding:12px 14px; background:var(--bg-white); border:1px solid var(--border); border-radius:9px; cursor:pointer; transition:all 0.18s ease;"
+               onmouseover="this.style.borderColor='var(--accent)'; this.style.background='var(--accent-light)'"
+               onmouseout="this.style.borderColor='var(--border)'; this.style.background='var(--bg-white)'">
+            <span style="font-size:1.3rem; flex-shrink:0;">${s.icon}</span>
+            <div style="min-width:0;">
+              <div style="font-size:0.82rem; font-weight:600; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${s.title}</div>
+              <div style="font-size:0.68rem; color:var(--text-tertiary); font-family:var(--font-mono);">${s.tool}</div>
+            </div>
+          </div>`).join('')}
+      </div>
+    </div>`;
+}
+
+function clearRecentlyViewed() {
+  App.recentlyViewed = [];
+  localStorage.removeItem('sb-recent');
+  document.getElementById('recently-viewed-section').innerHTML = '';
+}
+
+// ── Compare System ────────────────────────────────────
+function toggleCompare(id) {
+  const idx = App.compareList.indexOf(id);
+  if (idx > -1) {
+    App.compareList.splice(idx, 1);
+  } else {
+    if (App.compareList.length >= 3) {
+      toast('Maximum 3 solutions can be compared at once');
+      return;
+    }
+    App.compareList.push(id);
+  }
+  updateCompareUI();
+}
+
+function updateCompareUI() {
+  const bar   = document.getElementById('compare-bar');
+  const chips = document.getElementById('compare-chips');
+  const count = document.getElementById('compare-count');
+  const n     = App.compareList.length;
+
+  // Update sidebar count badge
+  if (count) {
+    count.textContent = n;
+    count.style.display = n > 0 ? 'inline-flex' : 'none';
+  }
+
+  // Update all compare buttons on cards currently in DOM
+  document.querySelectorAll('[id^="cmp-btn-"]').forEach(btn => {
+    const id = btn.id.replace('cmp-btn-', '');
+    const active = App.compareList.includes(id);
+    btn.classList.toggle('active', active);
+    btn.title = active ? 'Remove from comparison' : 'Add to comparison';
+  });
+
+  if (n === 0) { bar.classList.remove('visible'); return; }
+
+  bar.classList.add('visible');
+
+  chips.innerHTML = App.compareList.map(id => {
+    const sol = App.solutions.find(s => s.id === id);
+    if (!sol) return '';
+    return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; background:var(--accent-light); border:1px solid var(--accent-border); border-radius:6px; font-size:0.75rem; font-weight:500;">
+      ${sol.icon} ${sol.title}
+      <button onclick="toggleCompare('${id}')" style="background:none; border:none; cursor:pointer; color:var(--accent); font-size:0.8rem; padding:0; line-height:1;">✕</button>
+    </span>`;
+  }).join('');
+}
+
+function clearCompare() {
+  App.compareList = [];
+  updateCompareUI();
+}
+
+function renderCompareView() {
+  const el = document.getElementById('view-compare');
+  if (!el) return;
+
+  const solutions = App.compareList
+    .map(id => App.solutions.find(s => s.id === id))
+    .filter(Boolean);
+
+  if (solutions.length === 0) {
+    el.innerHTML = `
+      <div style="padding:64px 28px; text-align:center; color:var(--text-tertiary);">
+        <div style="font-size:2.5rem; margin-bottom:12px;">⚖️</div>
+        <div style="font-family:var(--font-display); font-style:italic; font-size:1.1rem; color:var(--text-secondary); margin-bottom:8px;">No solutions selected</div>
+        <div style="font-size:0.85rem; margin-bottom:20px;">Click the ⚖️ button on any card to add it to comparison.</div>
+        <button class="btn-primary" onclick="showView('solutions')">Browse Solutions</button>
+      </div>`;
+    return;
+  }
+
+  const cols = solutions.map(s => `
+    <div style="flex:1; min-width:220px;">
+      <div style="padding:16px; background:var(--bg-white); border:1px solid ${s.color}44; border-radius:10px; margin-bottom:16px; text-align:center;">
+        <div style="font-size:2rem; margin-bottom:8px;">${s.icon}</div>
+        <div style="font-family:var(--font-display); font-style:italic; font-weight:700; font-size:1rem; margin-bottom:6px;">${s.title}</div>
+        <span class="badge badge-tool">${s.tool}</span>
+        <button onclick="toggleCompare('${s.id}'); renderCompareView();" style="display:block; margin:10px auto 0; font-size:0.7rem; color:var(--text-tertiary); background:none; border:none; cursor:pointer; text-decoration:underline;">Remove</button>
+      </div>
+    </div>`).join('');
+
+  const rows = [
+    { label: 'Difficulty',  fn: s => `<span class="badge badge-${s.difficulty.toLowerCase()}">${s.difficulty}</span>` },
+    { label: 'Status',      fn: s => s.status },
+    { label: 'Version',     fn: s => `<code style="font-family:var(--font-mono); font-size:0.8rem;">v${s.version}</code>` },
+    { label: 'Est. Deploy', fn: s => deployTime(s) },
+    { label: 'Components',  fn: s => s.components.length + ' components' },
+    { label: 'Updated',     fn: s => new Date(s.lastUpdated).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) },
+    { label: 'Prerequisites', fn: s => `<ul style="margin:0; padding-left:14px; font-size:0.78rem; color:var(--text-secondary);">${s.prerequisites.map(p => `<li style="margin-bottom:2px;">${p}</li>`).join('')}</ul>` },
+    { label: 'Key Features', fn: s => `<ul style="margin:0; padding-left:14px; font-size:0.78rem; color:var(--text-secondary);">${s.features.slice(0,5).map(f => `<li style="margin-bottom:2px;">${f}</li>`).join('')}</ul>` },
+    { label: 'Tags',        fn: s => s.tags.map(t => `<span class="card3d-tag" style="margin:1px;">${t}</span>`).join('') },
+    { label: 'GitHub',      fn: s => `<a href="${s.githubRepo}" target="_blank" rel="noopener" style="color:var(--accent); font-size:0.8rem; text-decoration:underline;">View repo →</a>` },
+    { label: 'Download',    fn: s => `<a href="${s.packagePath}" target="_blank" rel="noopener" class="btn-download" style="font-size:0.75rem; padding:5px 10px; display:inline-flex; align-items:center; gap:4px; border-radius:5px;">⬇ Package</a>` },
+  ].map(row => `
+    <tr>
+      <td style="padding:10px 14px; font-size:0.8rem; font-weight:600; color:var(--text-tertiary); white-space:nowrap; border-bottom:1px solid var(--border); border-right:1px solid var(--border); background:var(--bg-subtle);">${row.label}</td>
+      ${solutions.map(s => `<td style="padding:10px 14px; font-size:0.82rem; color:var(--text-secondary); border-bottom:1px solid var(--border); border-right:1px solid var(--border); vertical-align:top;">${row.fn(s)}</td>`).join('')}
+    </tr>`).join('');
+
+  el.innerHTML = `
+    <div style="padding:28px;">
+      <button class="detail-back" onclick="history.back(); showView('solutions')">
+        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
+        Back to solutions
+      </button>
+      <h1 style="font-family:var(--font-display); font-style:italic; font-size:1.5rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:20px;">⚖️ Comparing ${solutions.length} Solutions</h1>
+
+      <!-- Card previews -->
+      <div style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">${cols}</div>
+
+      <!-- Comparison table -->
+      <div style="overflow-x:auto; border:1px solid var(--border); border-radius:10px;">
+        <table style="width:100%; border-collapse:collapse; min-width:500px;">
+          <thead>
+            <tr>
+              <th style="padding:10px 14px; text-align:left; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); background:var(--bg-subtle); border-bottom:1px solid var(--border); border-right:1px solid var(--border);"></th>
+              ${solutions.map(s => `<th style="padding:10px 14px; text-align:left; font-size:0.8rem; font-weight:600; background:var(--bg-subtle); border-bottom:1px solid var(--border); border-right:1px solid var(--border);">${s.icon} ${s.title}</th>`).join('')}
+            </tr>
+          </thead>
+          <tbody>${rows}</tbody>
+        </table>
+      </div>
+
+      <div style="margin-top:16px; text-align:right;">
+        <button class="btn-outline" onclick="clearCompare(); showView('solutions')" style="font-size:0.82rem;">Clear & start over</button>
+      </div>
+    </div>`;
+}
+
 function renderWhatsNew() {
   if (!App.solutions.length) return '';
 
