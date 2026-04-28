@@ -107,8 +107,8 @@ const App = {
   darkMode: false,
   comments: {},
   ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),
-  compareList: [],   // IDs of solutions selected for comparison (max 3)
-  recentlyViewed: JSON.parse(localStorage.getItem('sb-recent') || '[]') // IDs, most recent first
+  compareList: [],   // kept empty — compare feature removed
+  recentlyViewed: JSON.parse(localStorage.getItem('sb-recent') || '[]')
 
   sampleComments: {
     "employee-onboarding": [
@@ -245,11 +245,6 @@ async function boot() {
   document.querySelectorAll('[data-nav="about"]').forEach(el => {
     el.addEventListener('click', () => { showView('about'); closeMobileMenu(); });
   });
-
-  // Compare nav link
-  document.querySelectorAll('[data-nav="compare"]').forEach(el => {
-    el.addEventListener('click', () => { showView('compare'); closeMobileMenu(); });
-  });
 }
 
 // ── Hash Routing ────────────────────────────────────
@@ -264,8 +259,6 @@ function handleHash() {
     showView('solutions');
   } else if (hash === '#about') {
     showView('about');
-  } else if (hash === '#compare') {
-    showView('compare');
   } else {
     showView('home');
   }
@@ -300,11 +293,6 @@ function showView(view) {
     updateSidebarActive('about');
     history.pushState(null, '', '#about');
     renderAboutView();
-  } else if (view === 'compare') {
-    document.getElementById('view-compare').classList.add('active');
-    updateSidebarActive('compare');
-    history.pushState(null, '', '#compare');
-    renderCompareView();
   }
 
   // Update topbar title
@@ -425,7 +413,6 @@ function cardHTML(s, delay = 0) {
   const color = s.color || '#0078d4';
   const userRating = App.ratings[s.id];
   const comm = Ratings.get(s.id);
-  const inCompare = App.compareList.includes(s.id);
 
   const commText = comm.count > 0
     ? comm.avg.toFixed(1) + ' ★ (' + comm.count + ')'
@@ -443,6 +430,8 @@ function cardHTML(s, delay = 0) {
          ${commText ? `<span class="card3d-comm-rating">${commText}</span>` : ''}
        </div>`;
 
+  const dt = deployTime(s);
+
   return `
     <div class="card3d-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
          onmousemove="tiltCard(event, this)"
@@ -451,19 +440,11 @@ function cardHTML(s, delay = 0) {
 
       <div class="card3d-glow" style="--glow:${color}"></div>
 
-      <!-- Compare toggle — top-right corner, stops card click propagation -->
-      <button class="card3d-compare-btn ${inCompare ? 'active' : ''}"
-              title="${inCompare ? 'Remove from comparison' : 'Add to comparison'}"
-              onclick="event.stopPropagation(); toggleCompare('${s.id}')"
-              id="cmp-btn-${s.id}">
-        ⚖️
-      </button>
-
       <div class="card3d" style="--accent:${color}">
-        <div class="card3d-bar" style="background:linear-gradient(90deg, ${color}, ${color}88, transparent)"></div>
+        <div class="card3d-bar" style="background:linear-gradient(90deg,${color},${color}88,transparent)"></div>
 
         <div class="card3d-header">
-          <div class="card3d-icon" style="background:${color}22; border:1px solid ${color}44; color:${color}">${s.icon}</div>
+          <div class="card3d-icon" style="background:${color}22;border:1px solid ${color}44;color:${color}">${s.icon}</div>
           <div class="card3d-badges">
             <span class="card3d-badge tool">${s.tool}</span>
             <span class="card3d-badge ${s.status === 'Production Ready' ? 'prod' : 'beta'}">${s.status === 'Production Ready' ? 'Prod' : 'Beta'}</span>
@@ -490,9 +471,7 @@ function cardHTML(s, delay = 0) {
               <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
               ${formatNum(s.downloads)}
             </span>
-            <span class="card3d-meta-item" title="Estimated deployment time">
-              ⏱ ${deployTime(s)}
-            </span>
+            <span class="card3d-meta-item" title="Estimated deployment time">⏱ ${dt}</span>
             <span class="card3d-diff card3d-diff-${s.difficulty.toLowerCase()}">${s.difficulty}</span>
           </div>
           <div class="card3d-arrow">
@@ -502,8 +481,7 @@ function cardHTML(s, delay = 0) {
 
       </div>
     </div>`;
-
-// ── 3D tilt effect ──────────────────────────────────
+}
 function tiltCard(e, wrap) {
   const rect = wrap.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -653,6 +631,8 @@ function openDetail(sol, pushState = true) {
         </div>
       </div>
 
+      ${renderDeploymentTracker(sol)}
+
       <div class="content-block" id="readme-block">
         <h2 class="section-title">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -688,7 +668,12 @@ function openDetail(sol, pushState = true) {
           <div class="stat-cell"><div class="stat-num">${sol.stars}</div><div class="stat-lbl">GH Stars</div></div>
           <div class="stat-cell"><div class="stat-num">${formatNum(sol.downloads)}</div><div class="stat-lbl">Downloads</div></div>
           <div class="stat-cell"><div class="stat-num">${sol.components.length}</div><div class="stat-lbl">Components</div></div>
-          <div class="stat-cell"><div class="stat-num">${sol.features.length}</div><div class="stat-lbl">Features</div></div>
+          <div class="stat-cell">
+            <div class="stat-num" id="sidebar-tracker-stat-${sol.id}" style="color:${(() => { const p = trackerProgress(sol.id, sol); return p.total > 0 && p.done === p.total ? 'var(--green)' : 'var(--text-primary)'; })()}">
+              ${(() => { const p = trackerProgress(sol.id, sol); return p.total > 0 ? p.done + '/' + p.total : '—'; })()}
+            </div>
+            <div class="stat-lbl">Deployed</div>
+          </div>
         </div>
 
         <!-- Community rating row inside stats -->
@@ -1454,135 +1439,136 @@ function clearRecentlyViewed() {
   document.getElementById('recently-viewed-section').innerHTML = '';
 }
 
-// ── Compare System ────────────────────────────────────
-function toggleCompare(id) {
-  const idx = App.compareList.indexOf(id);
-  if (idx > -1) {
-    App.compareList.splice(idx, 1);
-  } else {
-    if (App.compareList.length >= 3) {
-      toast('Maximum 3 solutions can be compared at once');
-      return;
-    }
-    App.compareList.push(id);
-  }
-  updateCompareUI();
+// ── Deployment Tracker ───────────────────────────────
+// Stores per-solution checklist progress in localStorage
+// Keys: 'sb-track-{solutionId}' → { prereqs: [bool,...], components: [bool,...] }
+
+function getTrackerData(id) {
+  try { return JSON.parse(localStorage.getItem('sb-track-' + id) || 'null'); } catch(e) { return null; }
 }
 
-function updateCompareUI() {
-  const bar   = document.getElementById('compare-bar');
-  const chips = document.getElementById('compare-chips');
-  const count = document.getElementById('compare-count');
-  const n     = App.compareList.length;
-
-  // Update sidebar count badge
-  if (count) {
-    count.textContent = n;
-    count.style.display = n > 0 ? 'inline-flex' : 'none';
-  }
-
-  // Update all compare buttons on cards currently in DOM
-  document.querySelectorAll('[id^="cmp-btn-"]').forEach(btn => {
-    const id = btn.id.replace('cmp-btn-', '');
-    const active = App.compareList.includes(id);
-    btn.classList.toggle('active', active);
-    btn.title = active ? 'Remove from comparison' : 'Add to comparison';
-  });
-
-  if (n === 0) { bar.classList.remove('visible'); return; }
-
-  bar.classList.add('visible');
-
-  chips.innerHTML = App.compareList.map(id => {
-    const sol = App.solutions.find(s => s.id === id);
-    if (!sol) return '';
-    return `<span style="display:inline-flex; align-items:center; gap:5px; padding:3px 8px; background:var(--accent-light); border:1px solid var(--accent-border); border-radius:6px; font-size:0.75rem; font-weight:500;">
-      ${sol.icon} ${sol.title}
-      <button onclick="toggleCompare('${id}')" style="background:none; border:none; cursor:pointer; color:var(--accent); font-size:0.8rem; padding:0; line-height:1;">✕</button>
-    </span>`;
-  }).join('');
+function saveTrackerData(id, data) {
+  localStorage.setItem('sb-track-' + id, JSON.stringify(data));
 }
 
-function clearCompare() {
-  App.compareList = [];
-  updateCompareUI();
+function trackerProgress(id, sol) {
+  const data = getTrackerData(id);
+  if (!data) return { done: 0, total: 0 };
+  const total = sol.prerequisites.length + sol.components.length;
+  const done  = [...(data.prereqs || []), ...(data.components || [])].filter(Boolean).length;
+  return { done, total };
 }
 
-function renderCompareView() {
-  const el = document.getElementById('view-compare');
-  if (!el) return;
+function renderDeploymentTracker(sol) {
+  const id   = sol.id;
+  const data = getTrackerData(id) || {
+    prereqs:    sol.prerequisites.map(() => false),
+    components: sol.components.map(() => false)
+  };
 
-  const solutions = App.compareList
-    .map(id => App.solutions.find(s => s.id === id))
-    .filter(Boolean);
+  const total = sol.prerequisites.length + sol.components.length;
+  const done  = [...data.prereqs, ...data.components].filter(Boolean).length;
+  const pct   = total > 0 ? Math.round((done / total) * 100) : 0;
 
-  if (solutions.length === 0) {
-    el.innerHTML = `
-      <div style="padding:64px 28px; text-align:center; color:var(--text-tertiary);">
-        <div style="font-size:2.5rem; margin-bottom:12px;">⚖️</div>
-        <div style="font-family:var(--font-display); font-style:italic; font-size:1.1rem; color:var(--text-secondary); margin-bottom:8px;">No solutions selected</div>
-        <div style="font-size:0.85rem; margin-bottom:20px;">Click the ⚖️ button on any card to add it to comparison.</div>
-        <button class="btn-primary" onclick="showView('solutions')">Browse Solutions</button>
-      </div>`;
-    return;
-  }
+  const prereqRows = sol.prerequisites.map((p, i) => `
+    <label class="tracker-row ${data.prereqs[i] ? 'checked' : ''}" onclick="trackToggle('${id}','prereq',${i})">
+      <span class="tracker-check">${data.prereqs[i] ? '✓' : ''}</span>
+      <span class="tracker-text">${p}</span>
+    </label>`).join('');
 
-  const cols = solutions.map(s => `
-    <div style="flex:1; min-width:220px;">
-      <div style="padding:16px; background:var(--bg-white); border:1px solid ${s.color}44; border-radius:10px; margin-bottom:16px; text-align:center;">
-        <div style="font-size:2rem; margin-bottom:8px;">${s.icon}</div>
-        <div style="font-family:var(--font-display); font-style:italic; font-weight:700; font-size:1rem; margin-bottom:6px;">${s.title}</div>
-        <span class="badge badge-tool">${s.tool}</span>
-        <button onclick="toggleCompare('${s.id}'); renderCompareView();" style="display:block; margin:10px auto 0; font-size:0.7rem; color:var(--text-tertiary); background:none; border:none; cursor:pointer; text-decoration:underline;">Remove</button>
+  const compRows = sol.components.map((c, i) => `
+    <label class="tracker-row ${data.components[i] ? 'checked' : ''}" onclick="trackToggle('${id}','comp',${i})">
+      <span class="tracker-check">${data.components[i] ? '✓' : ''}</span>
+      <div>
+        <span class="tracker-text">${c.name}</span>
+        <span class="tracker-sub">${c.description}</span>
       </div>
-    </div>`).join('');
+    </label>`).join('');
 
-  const rows = [
-    { label: 'Difficulty',  fn: s => `<span class="badge badge-${s.difficulty.toLowerCase()}">${s.difficulty}</span>` },
-    { label: 'Status',      fn: s => s.status },
-    { label: 'Version',     fn: s => `<code style="font-family:var(--font-mono); font-size:0.8rem;">v${s.version}</code>` },
-    { label: 'Est. Deploy', fn: s => deployTime(s) },
-    { label: 'Components',  fn: s => s.components.length + ' components' },
-    { label: 'Updated',     fn: s => new Date(s.lastUpdated).toLocaleDateString('en-GB', {day:'numeric', month:'short', year:'numeric'}) },
-    { label: 'Prerequisites', fn: s => `<ul style="margin:0; padding-left:14px; font-size:0.78rem; color:var(--text-secondary);">${s.prerequisites.map(p => `<li style="margin-bottom:2px;">${p}</li>`).join('')}</ul>` },
-    { label: 'Key Features', fn: s => `<ul style="margin:0; padding-left:14px; font-size:0.78rem; color:var(--text-secondary);">${s.features.slice(0,5).map(f => `<li style="margin-bottom:2px;">${f}</li>`).join('')}</ul>` },
-    { label: 'Tags',        fn: s => s.tags.map(t => `<span class="card3d-tag" style="margin:1px;">${t}</span>`).join('') },
-    { label: 'GitHub',      fn: s => `<a href="${s.githubRepo}" target="_blank" rel="noopener" style="color:var(--accent); font-size:0.8rem; text-decoration:underline;">View repo →</a>` },
-    { label: 'Download',    fn: s => `<a href="${s.packagePath}" target="_blank" rel="noopener" class="btn-download" style="font-size:0.75rem; padding:5px 10px; display:inline-flex; align-items:center; gap:4px; border-radius:5px;">⬇ Package</a>` },
-  ].map(row => `
-    <tr>
-      <td style="padding:10px 14px; font-size:0.8rem; font-weight:600; color:var(--text-tertiary); white-space:nowrap; border-bottom:1px solid var(--border); border-right:1px solid var(--border); background:var(--bg-subtle);">${row.label}</td>
-      ${solutions.map(s => `<td style="padding:10px 14px; font-size:0.82rem; color:var(--text-secondary); border-bottom:1px solid var(--border); border-right:1px solid var(--border); vertical-align:top;">${row.fn(s)}</td>`).join('')}
-    </tr>`).join('');
+  return `
+    <div class="content-block" id="tracker-block-${id}">
+      <h2 class="section-title">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 11 12 14 22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg>
+        Deployment Tracker
+      </h2>
 
-  el.innerHTML = `
-    <div style="padding:28px;">
-      <button class="detail-back" onclick="history.back(); showView('solutions')">
-        <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-        Back to solutions
-      </button>
-      <h1 style="font-family:var(--font-display); font-style:italic; font-size:1.5rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:20px;">⚖️ Comparing ${solutions.length} Solutions</h1>
-
-      <!-- Card previews -->
-      <div style="display:flex; gap:12px; margin-bottom:24px; flex-wrap:wrap;">${cols}</div>
-
-      <!-- Comparison table -->
-      <div style="overflow-x:auto; border:1px solid var(--border); border-radius:10px;">
-        <table style="width:100%; border-collapse:collapse; min-width:500px;">
-          <thead>
-            <tr>
-              <th style="padding:10px 14px; text-align:left; font-size:0.7rem; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); background:var(--bg-subtle); border-bottom:1px solid var(--border); border-right:1px solid var(--border);"></th>
-              ${solutions.map(s => `<th style="padding:10px 14px; text-align:left; font-size:0.8rem; font-weight:600; background:var(--bg-subtle); border-bottom:1px solid var(--border); border-right:1px solid var(--border);">${s.icon} ${s.title}</th>`).join('')}
-            </tr>
-          </thead>
-          <tbody>${rows}</tbody>
-        </table>
+      <!-- Progress bar -->
+      <div style="margin-bottom:18px;">
+        <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:6px;">
+          <span style="font-size:0.78rem; color:var(--text-secondary);">
+            ${done === total && total > 0 ? '🎉 Fully deployed!' : done + ' of ' + total + ' steps complete'}
+          </span>
+          <span style="font-family:var(--font-mono); font-size:0.78rem; font-weight:700; color:${pct === 100 ? 'var(--green)' : 'var(--accent)'};">${pct}%</span>
+        </div>
+        <div style="height:6px; background:var(--border); border-radius:3px; overflow:hidden;">
+          <div id="tracker-bar-${id}" style="height:100%; width:${pct}%; background:${pct === 100 ? 'var(--green)' : 'var(--accent)'}; border-radius:3px; transition:width 0.4s ease;"></div>
+        </div>
       </div>
 
-      <div style="margin-top:16px; text-align:right;">
-        <button class="btn-outline" onclick="clearCompare(); showView('solutions')" style="font-size:0.82rem;">Clear & start over</button>
-      </div>
+      <!-- Prerequisites -->
+      ${sol.prerequisites.length > 0 ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:8px;">Prerequisites</div>
+        <div class="tracker-list">${prereqRows}</div>
+      </div>` : ''}
+
+      <!-- Components -->
+      ${sol.components.length > 0 ? `
+      <div style="margin-bottom:14px;">
+        <div style="font-size:0.7rem; font-weight:700; text-transform:uppercase; letter-spacing:0.1em; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:8px;">Components</div>
+        <div class="tracker-list">${compRows}</div>
+      </div>` : ''}
+
+      <!-- Reset -->
+      ${done > 0 ? `
+      <button onclick="resetTracker('${id}')" style="font-size:0.72rem; color:var(--text-tertiary); background:none; border:none; cursor:pointer; text-decoration:underline; padding:0;">
+        Reset progress
+      </button>` : ''}
     </div>`;
+}
+
+function trackToggle(id, type, idx) {
+  const sol  = App.solutions.find(s => s.id === id);
+  if (!sol) return;
+  const data = getTrackerData(id) || {
+    prereqs:    sol.prerequisites.map(() => false),
+    components: sol.components.map(() => false)
+  };
+
+  if (type === 'prereq') data.prereqs[idx] = !data.prereqs[idx];
+  else                   data.components[idx] = !data.components[idx];
+
+  saveTrackerData(id, data);
+
+  // Re-render only the tracker block (fast, no full page reload)
+  const block = document.getElementById('tracker-block-' + id);
+  if (block) block.outerHTML = renderDeploymentTracker(sol);
+
+  // Update sidebar tracker stat if visible
+  updateSidebarTrackerStat(id, sol);
+
+  // Toast on completion
+  const total = sol.prerequisites.length + sol.components.length;
+  const done  = [...data.prereqs, ...data.components].filter(Boolean).length;
+  if (done === total && total > 0) toast('🎉 All steps complete! Solution deployed.');
+}
+
+function resetTracker(id) {
+  localStorage.removeItem('sb-track-' + id);
+  const sol = App.solutions.find(s => s.id === id);
+  if (!sol) return;
+  const block = document.getElementById('tracker-block-' + id);
+  if (block) block.outerHTML = renderDeploymentTracker(sol);
+  updateSidebarTrackerStat(id, sol);
+  toast('Tracker reset');
+}
+
+function updateSidebarTrackerStat(id, sol) {
+  const el = document.getElementById('sidebar-tracker-stat-' + id);
+  if (!el) return;
+  const { done, total } = trackerProgress(id, sol);
+  el.textContent = done + '/' + total;
+  el.style.color = done === total && total > 0 ? 'var(--green)' : 'var(--text-primary)';
 }
 
 function renderWhatsNew() {
