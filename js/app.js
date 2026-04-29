@@ -443,7 +443,7 @@ function statusConfig(s) {
     'Deprecated':       { dot: '#ef4444', label: 'Deprecated' },
     'Experimental':     { dot: '#ef4444', label: 'Experimental' }
   };
-  return map[s] || { dot: '#8892a4', label: s };
+  return map[s] || { dot: '#8892a4', label: s || 'Unknown' };
 }
 
 function useCaseConfig(u) {
@@ -460,128 +460,151 @@ function getLikes(s)     { return (s.likes || 0) + (App.localLikeDelta ? (App.lo
 function getViews(s)     { return (s.views || 0) + (App.localViews[s.id] || 0); }
 function getDownloads(s) { return (s.downloads || 0) + (App.localDownloads[s.id] || 0); }
 
+// ── Card visual generator ── generates a CSS gradient "image" per solution
+function cardVisual(s) {
+  const color = s.color || '#0078d4';
+  // Generate a unique abstract gradient using the solution color + icon
+  const palettes = {
+    '#0078d4': ['#667eea', '#764ba2', '#0078d4'],
+    '#0066b8': ['#4facfe', '#00f2fe', '#0066b8'],
+    '#038387': ['#0acf97', '#038387', '#00b4d8'],
+    '#5c2d91': ['#a855f7', '#7c3aed', '#5c2d91'],
+    '#107c10': ['#56ab2f', '#a8e063', '#107c10'],
+    '#ca5010': ['#f7971e', '#ffd200', '#ca5010'],
+    '#6264a7': ['#6264a7', '#8b5cf6', '#a78bfa'],
+    '#d13438': ['#f953c6', '#b91d73', '#d13438']
+  };
+  const pal = palettes[color] || [color, color + 'aa', color + '55'];
+  return `radial-gradient(ellipse at 30% 20%, ${pal[0]}cc 0%, transparent 60%),
+          radial-gradient(ellipse at 80% 80%, ${pal[1]}99 0%, transparent 55%),
+          radial-gradient(ellipse at 60% 50%, ${pal[2]}66 0%, transparent 70%),
+          linear-gradient(135deg, #f8f9ff 0%, #eef0f8 100%)`;
+}
+
 function cardHTML(s, delay = 0) {
+  // Defensive defaults — handles solutions submitted without new fields
   const color   = s.color || '#0078d4';
   const isFav   = App.favourites.includes(s.id);
   const isLiked = !!App.likes[s.id];
-  const sc      = statusConfig(s.status);
-  const uc      = useCaseConfig(s.useCase);
-  const sub     = s.submitter || { name: 'SolutionBase', initials: 'SB', color: '#0052cc' };
-  const dt      = deployTime(s);
+  const sc      = statusConfig(s.status || 'Production Ready');
+  const uc      = useCaseConfig(s.useCase || 'General');
+  const sub     = s.submitter || { name: s.author || 'SolutionBase', initials: (s.author || 'SB').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(), color: color };
   const likes   = getLikes(s);
   const views   = getViews(s);
   const dls     = getDownloads(s);
-  const created = new Date(s.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
-
-  // Escape description for tooltip attr
-  const descEsc = (s.description || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
+  const created = s.lastUpdated ? new Date(s.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
+  const setupT  = s.setupTime  || deployTime(s);
+  const learnT  = s.learnTime  || '—';
+  const imgSrc  = s.image || null; // optional real image URL from solutions.json
+  const visual  = cardVisual(s);
 
   return `
-    <div class="card3d-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
+    <div class="scard-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
          onmousemove="tiltCard(event,this)" onmouseleave="resetCard(this)">
 
-      <div class="card3d-glow" style="--glow:${color}"></div>
+      <div class="scard">
 
-      <div class="card3d" style="--accent:${color}">
+        <!-- IMAGE / VISUAL AREA -->
+        <div class="scard-image" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+          ${imgSrc
+            ? `<img src="${imgSrc}" alt="${s.title}" style="width:100%;height:100%;object-fit:cover;border-radius:0;" />`
+            : `<div class="scard-visual" style="background:${visual}">
+                 <div class="scard-visual-icon">${s.icon}</div>
+               </div>`
+          }
 
-        <!-- Top accent bar -->
-        <div class="card3d-bar" style="background:linear-gradient(90deg,${color},${color}66,transparent)"></div>
-
-        <!-- Row 1: icon + status dot + pin + share -->
-        <div class="card-row-top">
-          <div class="card3d-icon" style="background:${color}18;border:1px solid ${color}44;color:${color}">${s.icon}</div>
-
-          <div class="card-top-right">
-            <!-- Status indicator -->
-            <span class="card-status-dot" style="background:${sc.dot}" title="${sc.label}"></span>
-            <span class="card-status-label" style="color:${sc.dot}">${sc.label}</span>
-
-            <!-- Pin / Favourite -->
-            <button class="card-icon-btn pin-btn ${isFav ? 'active' : ''}"
-                    id="pin-${s.id}"
-                    title="${isFav ? 'Unpin from favourites' : 'Pin to favourites'}"
-                    onclick="event.stopPropagation(); toggleFavourite('${s.id}')">
-              📌
-            </button>
-
-            <!-- Share -->
-            <button class="card-icon-btn"
-                    title="Share this solution"
-                    onclick="event.stopPropagation(); openShare('${s.id}', '${s.title.replace(/'/g,"\\'")}')">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
-            </button>
+          <!-- Floating controls over image -->
+          <div class="scard-image-overlay">
+            <span class="scard-status-pill" style="--sc:${sc.dot}">
+              <span class="scard-status-dot"></span>${sc.label}
+            </span>
+            <div style="display:flex;gap:6px;">
+              <button class="scard-img-btn pin-btn ${isFav ? 'active' : ''}"
+                      id="pin-${s.id}" title="${isFav ? 'Unpin' : 'Pin to favourites'}"
+                      onclick="event.stopPropagation();toggleFavourite('${s.id}')">📌</button>
+              <button class="scard-img-btn"
+                      title="Share"
+                      onclick="event.stopPropagation();openShare('${s.id}','${s.title.replace(/'/g,"\\'")}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+            </div>
           </div>
         </div>
 
-        <!-- Title with description tooltip -->
-        <div class="card-title-row" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-          <div class="card3d-title">${s.title}</div>
-          <div class="card-desc-hint" data-desc="${descEsc}">
-            <span class="card-desc-text">Description</span>
-            <svg class="card-desc-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-            <div class="card-desc-tooltip">${s.description}</div>
+        <!-- BODY -->
+        <div class="scard-body" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+
+          <!-- Use case + tool badges -->
+          <div class="scard-badges">
+            <span class="scard-uc-badge">${uc.emoji} ${uc.label}</span>
+            <span class="scard-tool-badge">${s.tool}</span>
           </div>
+
+          <!-- Title + description tooltip -->
+          <div class="scard-title-row">
+            <h3 class="scard-title">${s.title}</h3>
+            <div class="scard-desc-trigger" onclick="event.stopPropagation()">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+              <span style="font-size:0.68rem;color:var(--text-tertiary);font-family:var(--font-mono);">Description</span>
+              <div class="scard-desc-tooltip">${s.description || ''}</div>
+            </div>
+          </div>
+
+          <!-- Tags row -->
+          <div class="scard-tags">
+            ${(s.tags || []).slice(0,3).map(t => `<span class="scard-tag">${t}</span>`).join('')}
+            ${(s.tags || []).length > 3 ? `<span class="scard-tag-more">+${s.tags.length-3}</span>` : ''}
+          </div>
+
+          <!-- Time estimates -->
+          <div class="scard-times">
+            <span class="scard-time">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              Setup: ${setupT}
+            </span>
+            <span class="scard-time-sep">·</span>
+            <span class="scard-time">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+              Learn: ${learnT}
+            </span>
+            <span class="scard-diff scard-diff-${(s.difficulty||'Intermediate').toLowerCase()}">${s.difficulty || 'Intermediate'}</span>
+          </div>
+
         </div>
 
-        <!-- Use case badge + tags -->
-        <div class="card-meta-badges" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-          <span class="card-usecase-badge">${uc.emoji} ${uc.label}</span>
-          ${s.tags.slice(0, 2).map(t => `<span class="card3d-tag">${t}</span>`).join('')}
-          ${s.tags.length > 2 ? `<span class="card3d-tag muted">+${s.tags.length - 2}</span>` : ''}
-        </div>
+        <!-- FOOTER -->
+        <div class="scard-footer">
+          <!-- Submitter -->
+          <div class="scard-submitter" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+            <div class="scard-avatar" style="background:${sub.color}">${sub.initials}</div>
+            <div>
+              <div class="scard-submitter-name">${sub.name}</div>
+              <div class="scard-submitter-date">${created}</div>
+            </div>
+          </div>
 
-        <!-- Times row -->
-        <div class="card-times-row" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-          <span class="card-time-item" title="Estimated setup time">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-            Setup: ${s.setupTime || dt}
-          </span>
-          <span class="card-time-sep">·</span>
-          <span class="card-time-item" title="Estimated learning time">
-            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-            Learn: ${s.learnTime || '—'}
-          </span>
-          <span class="card-time-sep">·</span>
-          <span class="card-diff card-diff-${s.difficulty.toLowerCase()}">${s.difficulty}</span>
-        </div>
+          <!-- Stats -->
+          <div class="scard-stats">
+            <button class="scard-stat-btn like-btn ${isLiked ? 'liked' : ''}"
+                    id="like-btn-${s.id}"
+                    title="${isLiked ? 'Unlike' : 'Like'}"
+                    onclick="event.stopPropagation();toggleLike('${s.id}')">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+              <span id="like-count-${s.id}">${formatNum(likes)}</span>
+            </button>
 
-        <!-- Divider -->
-        <div class="card-divider"></div>
+            <span class="scard-stat" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" title="Views">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+              <span id="view-count-${s.id}">${formatNum(views)}</span>
+            </span>
 
-        <!-- Submitter + date -->
-        <div class="card-submitter-row" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-          <div class="card-submitter-avatar" style="background:${sub.color}">${sub.initials}</div>
-          <span class="card-submitter-name">${sub.name}</span>
-          <span class="card-submitter-date">${created}</span>
-        </div>
-
-        <!-- Stats row: likes, views, downloads -->
-        <div class="card-stats-row">
-          <!-- Like button -->
-          <button class="card-stat-btn like-btn ${isLiked ? 'liked' : ''}"
-                  id="like-btn-${s.id}"
-                  title="${isLiked ? 'Unlike' : 'Like this solution'}"
-                  onclick="event.stopPropagation(); toggleLike('${s.id}')">
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-            <span id="like-count-${s.id}">${formatNum(likes)}</span>
-          </button>
-
-          <!-- Views (passive) -->
-          <span class="card-stat-item" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" title="Views">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-            <span id="view-count-${s.id}">${formatNum(views)}</span>
-          </span>
-
-          <!-- Downloads -->
-          <button class="card-stat-btn dl-btn"
-                  title="Download package"
-                  onclick="event.stopPropagation(); handleDownload('${s.id}', '${s.packagePath}')">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-            <span id="dl-count-${s.id}">${formatNum(dls)}</span>
-          </button>
-
-          <!-- Tool badge -->
-          <span class="card3d-badge tool" style="margin-left:auto;" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">${s.tool}</span>
+            <button class="scard-stat-btn dl-btn"
+                    title="Download"
+                    onclick="event.stopPropagation();handleDownload('${s.id}','${s.packagePath||''}')">
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+              <span id="dl-count-${s.id}">${formatNum(dls)}</span>
+            </button>
+          </div>
         </div>
 
       </div>
@@ -766,26 +789,28 @@ function startTypingAnimation() {
 
 function tiltCard(e, wrap) {
   const rect = wrap.getBoundingClientRect();
-  const x = e.clientX - rect.left;
-  const y = e.clientY - rect.top;
+  const x  = e.clientX - rect.left;
+  const y  = e.clientY - rect.top;
   const cx = rect.width  / 2;
   const cy = rect.height / 2;
-  const rotX =  (y - cy) / cy * -8;   // max ±8 deg
-  const rotY =  (x - cx) / cx *  8;
+  const rotX =  (y - cy) / cy * -6;
+  const rotY =  (x - cx) / cx *  6;
 
-  const card = wrap.querySelector('.card3d');
-  const glow = wrap.querySelector('.card3d-glow');
-
-  card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(8px)`;
-  glow.style.opacity = '1';
-  glow.style.transform = `translate(${(x / rect.width) * 60 - 30}%, ${(y / rect.height) * 60 - 30}%)`;
+  const card = wrap.querySelector('.scard');
+  const glow = wrap.querySelector('.scard-glow');
+  if (card) card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(6px)`;
+  if (glow) {
+    glow.style.opacity = '1';
+    glow.style.left    = (x / rect.width  * 100) + '%';
+    glow.style.top     = (y / rect.height * 100) + '%';
+  }
 }
 
 function resetCard(wrap) {
-  const card = wrap.querySelector('.card3d');
-  const glow = wrap.querySelector('.card3d-glow');
-  card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-  glow.style.opacity = '0';
+  const card = wrap.querySelector('.scard');
+  const glow = wrap.querySelector('.scard-glow');
+  if (card) card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
+  if (glow) glow.style.opacity = '0';
 }
 
 // ── Detail View ─────────────────────────────────────
