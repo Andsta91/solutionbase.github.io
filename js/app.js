@@ -109,6 +109,10 @@ const App = {
   ratings: JSON.parse(localStorage.getItem('sb-ratings') || '{}'),
   compareList: [],
   recentlyViewed: JSON.parse(localStorage.getItem('sb-recent') || '[]'),
+  favourites: JSON.parse(localStorage.getItem('sb-favourites') || '[]'),       // pinned solution IDs
+  likes: JSON.parse(localStorage.getItem('sb-likes') || '{}'),                 // { id: true } = liked
+  localViews: JSON.parse(localStorage.getItem('sb-views') || '{}'),            // { id: count } extra views
+  localDownloads: JSON.parse(localStorage.getItem('sb-downloads') || '{}'),    // { id: count } extra downloads
 
   sampleComments: {
     "employee-onboarding": [
@@ -245,6 +249,28 @@ async function boot() {
   document.querySelectorAll('[data-nav="about"]').forEach(el => {
     el.addEventListener('click', () => { showView('about'); closeMobileMenu(); });
   });
+
+  // Favourites nav
+  document.querySelectorAll('[data-nav="favourites"]').forEach(el => {
+    el.addEventListener('click', () => { showView('favourites'); closeMobileMenu(); });
+  });
+
+  // Share popup Escape key close
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+      const overlay = document.getElementById('share-overlay');
+      if (overlay && overlay.classList.contains('open')) closeSharePopup();
+    }
+  });
+
+  // Init localLikeDelta
+  App.localLikeDelta = JSON.parse(localStorage.getItem('sb-like-delta') || '{}');
+
+  // Init fav count
+  updateFavCount();
+
+  // Start typing animation
+  startTypingAnimation();
 }
 
 // ── Hash Routing ────────────────────────────────────
@@ -259,6 +285,8 @@ function handleHash() {
     showView('solutions');
   } else if (hash === '#about') {
     showView('about');
+  } else if (hash === '#favourites') {
+    showView('favourites');
   } else {
     showView('home');
   }
@@ -293,6 +321,11 @@ function showView(view) {
     updateSidebarActive('about');
     history.pushState(null, '', '#about');
     renderAboutView();
+  } else if (view === 'favourites') {
+    document.getElementById('view-favourites').classList.add('active');
+    updateSidebarActive('favourites');
+    history.pushState(null, '', '#favourites');
+    renderFavouritesView();
   }
 
   // Update topbar title
@@ -403,85 +436,334 @@ function renderGrid() {
   container.innerHTML = App.filtered.map((s, i) => cardHTML(s, i * 40)).join('');
 }
 
-function deployTime(sol) {
-  const mins = sol.components.length * 20 + (sol.difficulty === 'Beginner' ? 0 : sol.difficulty === 'Intermediate' ? 30 : 60);
-  if (mins < 60) return mins + 'm deploy';
-  return (mins / 60).toFixed(1).replace('.0', '') + 'h deploy';
+function statusConfig(s) {
+  const map = {
+    'Production Ready': { dot: '#22c55e', label: 'Production Ready' },
+    'Beta':             { dot: '#f59e0b', label: 'Beta' },
+    'Deprecated':       { dot: '#ef4444', label: 'Deprecated' },
+    'Experimental':     { dot: '#ef4444', label: 'Experimental' }
+  };
+  return map[s] || { dot: '#8892a4', label: s };
 }
 
+function useCaseConfig(u) {
+  const map = {
+    'HR':         { emoji: '👤', label: 'HR' },
+    'Finance':    { emoji: '💰', label: 'Finance' },
+    'Automation': { emoji: '⚙️', label: 'Automation' },
+    'Reporting':  { emoji: '📊', label: 'Reporting' }
+  };
+  return map[u] || { emoji: '🏷️', label: u || 'General' };
+}
+
+function getLikes(s)     { return (s.likes || 0) + (App.localLikeDelta ? (App.localLikeDelta[s.id] || 0) : 0); }
+function getViews(s)     { return (s.views || 0) + (App.localViews[s.id] || 0); }
+function getDownloads(s) { return (s.downloads || 0) + (App.localDownloads[s.id] || 0); }
+
 function cardHTML(s, delay = 0) {
-  const color = s.color || '#0078d4';
-  const userRating = App.ratings[s.id];
-  const comm = Ratings.get(s.id);
+  const color   = s.color || '#0078d4';
+  const isFav   = App.favourites.includes(s.id);
+  const isLiked = !!App.likes[s.id];
+  const sc      = statusConfig(s.status);
+  const uc      = useCaseConfig(s.useCase);
+  const sub     = s.submitter || { name: 'SolutionBase', initials: 'SB', color: '#0052cc' };
+  const dt      = deployTime(s);
+  const likes   = getLikes(s);
+  const views   = getViews(s);
+  const dls     = getDownloads(s);
+  const created = new Date(s.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' });
 
-  const commText = comm.count > 0
-    ? comm.avg.toFixed(1) + ' ★ (' + comm.count + ')'
-    : '';
-
-  const ratingRow = userRating
-    ? `<div class="card3d-rating rated">
-         <span class="card3d-stars">${'★'.repeat(userRating)}${'☆'.repeat(5 - userRating)}</span>
-         <span class="card3d-rating-label">Your rating: ${userRating}/5</span>
-         ${commText ? `<span class="card3d-comm-rating">${commText}</span>` : ''}
-       </div>`
-    : `<div class="card3d-rating unrated">
-         <span class="card3d-stars unrated-stars">☆☆☆☆☆</span>
-         <span class="card3d-rating-label">Open to rate</span>
-         ${commText ? `<span class="card3d-comm-rating">${commText}</span>` : ''}
-       </div>`;
-
-  const dt = deployTime(s);
+  // Escape description for tooltip attr
+  const descEsc = (s.description || '').replace(/"/g, '&quot;').replace(/'/g, '&#39;');
 
   return `
     <div class="card3d-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
-         onmousemove="tiltCard(event, this)"
-         onmouseleave="resetCard(this)"
-         onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+         onmousemove="tiltCard(event,this)" onmouseleave="resetCard(this)">
 
       <div class="card3d-glow" style="--glow:${color}"></div>
 
       <div class="card3d" style="--accent:${color}">
-        <div class="card3d-bar" style="background:linear-gradient(90deg,${color},${color}88,transparent)"></div>
 
-        <div class="card3d-header">
-          <div class="card3d-icon" style="background:${color}22;border:1px solid ${color}44;color:${color}">${s.icon}</div>
-          <div class="card3d-badges">
-            <span class="card3d-badge tool">${s.tool}</span>
-            <span class="card3d-badge ${s.status === 'Production Ready' ? 'prod' : 'beta'}">${s.status === 'Production Ready' ? 'Prod' : 'Beta'}</span>
+        <!-- Top accent bar -->
+        <div class="card3d-bar" style="background:linear-gradient(90deg,${color},${color}66,transparent)"></div>
+
+        <!-- Row 1: icon + status dot + pin + share -->
+        <div class="card-row-top">
+          <div class="card3d-icon" style="background:${color}18;border:1px solid ${color}44;color:${color}">${s.icon}</div>
+
+          <div class="card-top-right">
+            <!-- Status indicator -->
+            <span class="card-status-dot" style="background:${sc.dot}" title="${sc.label}"></span>
+            <span class="card-status-label" style="color:${sc.dot}">${sc.label}</span>
+
+            <!-- Pin / Favourite -->
+            <button class="card-icon-btn pin-btn ${isFav ? 'active' : ''}"
+                    id="pin-${s.id}"
+                    title="${isFav ? 'Unpin from favourites' : 'Pin to favourites'}"
+                    onclick="event.stopPropagation(); toggleFavourite('${s.id}')">
+              📌
+            </button>
+
+            <!-- Share -->
+            <button class="card-icon-btn"
+                    title="Share this solution"
+                    onclick="event.stopPropagation(); openShare('${s.id}', '${s.title.replace(/'/g,"\\'")}')">
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+            </button>
           </div>
         </div>
 
-        <div class="card3d-title">${s.title}</div>
-        <div class="card3d-desc">${s.description}</div>
-
-        <div class="card3d-tags">
-          ${s.tags.slice(0, 3).map(t => `<span class="card3d-tag">${t}</span>`).join('')}
-          ${s.tags.length > 3 ? `<span class="card3d-tag muted">+${s.tags.length - 3}</span>` : ''}
+        <!-- Title with description tooltip -->
+        <div class="card-title-row" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+          <div class="card3d-title">${s.title}</div>
+          <div class="card-desc-hint" data-desc="${descEsc}">
+            <span class="card-desc-text">Description</span>
+            <svg class="card-desc-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
+            <div class="card-desc-tooltip">${s.description}</div>
+          </div>
         </div>
 
-        ${ratingRow}
+        <!-- Use case badge + tags -->
+        <div class="card-meta-badges" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+          <span class="card-usecase-badge">${uc.emoji} ${uc.label}</span>
+          ${s.tags.slice(0, 2).map(t => `<span class="card3d-tag">${t}</span>`).join('')}
+          ${s.tags.length > 2 ? `<span class="card3d-tag muted">+${s.tags.length - 2}</span>` : ''}
+        </div>
 
-        <div class="card3d-footer">
-          <div class="card3d-meta">
-            <span class="card3d-meta-item">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-              ${s.stars}
-            </span>
-            <span class="card3d-meta-item">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              ${formatNum(s.downloads)}
-            </span>
-            <span class="card3d-meta-item" title="Estimated deployment time">⏱ ${dt}</span>
-            <span class="card3d-diff card3d-diff-${s.difficulty.toLowerCase()}">${s.difficulty}</span>
-          </div>
-          <div class="card3d-arrow">
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M5 12h14M12 5l7 7-7 7"/></svg>
-          </div>
+        <!-- Times row -->
+        <div class="card-times-row" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+          <span class="card-time-item" title="Estimated setup time">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+            Setup: ${s.setupTime || dt}
+          </span>
+          <span class="card-time-sep">·</span>
+          <span class="card-time-item" title="Estimated learning time">
+            <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
+            Learn: ${s.learnTime || '—'}
+          </span>
+          <span class="card-time-sep">·</span>
+          <span class="card-diff card-diff-${s.difficulty.toLowerCase()}">${s.difficulty}</span>
+        </div>
+
+        <!-- Divider -->
+        <div class="card-divider"></div>
+
+        <!-- Submitter + date -->
+        <div class="card-submitter-row" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+          <div class="card-submitter-avatar" style="background:${sub.color}">${sub.initials}</div>
+          <span class="card-submitter-name">${sub.name}</span>
+          <span class="card-submitter-date">${created}</span>
+        </div>
+
+        <!-- Stats row: likes, views, downloads -->
+        <div class="card-stats-row">
+          <!-- Like button -->
+          <button class="card-stat-btn like-btn ${isLiked ? 'liked' : ''}"
+                  id="like-btn-${s.id}"
+                  title="${isLiked ? 'Unlike' : 'Like this solution'}"
+                  onclick="event.stopPropagation(); toggleLike('${s.id}')">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span id="like-count-${s.id}">${formatNum(likes)}</span>
+          </button>
+
+          <!-- Views (passive) -->
+          <span class="card-stat-item" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" title="Views">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+            <span id="view-count-${s.id}">${formatNum(views)}</span>
+          </span>
+
+          <!-- Downloads -->
+          <button class="card-stat-btn dl-btn"
+                  title="Download package"
+                  onclick="event.stopPropagation(); handleDownload('${s.id}', '${s.packagePath}')">
+            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+            <span id="dl-count-${s.id}">${formatNum(dls)}</span>
+          </button>
+
+          <!-- Tool badge -->
+          <span class="card3d-badge tool" style="margin-left:auto;" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">${s.tool}</span>
         </div>
 
       </div>
     </div>`;
 }
+
+function deployTime(sol) {
+  const mins = sol.components.length * 20 + (sol.difficulty === 'Beginner' ? 0 : sol.difficulty === 'Intermediate' ? 30 : 60);
+  if (mins < 60) return mins + 'm';
+  return (mins / 60).toFixed(1).replace('.0','') + 'h';
+}
+
+// ── Favourites ────────────────────────────────────────
+function toggleFavourite(id) {
+  const idx = App.favourites.indexOf(id);
+  if (idx > -1) {
+    App.favourites.splice(idx, 1);
+    toast('Removed from favourites');
+  } else {
+    App.favourites.unshift(id);
+    toast('📌 Pinned to favourites!');
+  }
+  localStorage.setItem('sb-favourites', JSON.stringify(App.favourites));
+  updateFavCount();
+
+  // Toggle pin button state on card
+  const btn = document.getElementById('pin-' + id);
+  if (btn) {
+    const isFav = App.favourites.includes(id);
+    btn.classList.toggle('active', isFav);
+    btn.title = isFav ? 'Unpin from favourites' : 'Pin to favourites';
+  }
+}
+
+function updateFavCount() {
+  const el = document.getElementById('fav-count');
+  if (el) el.textContent = App.favourites.length;
+}
+
+function renderFavouritesView() {
+  const el = document.getElementById('view-favourites');
+  if (!el) return;
+
+  const favSolutions = App.favourites
+    .map(id => App.solutions.find(s => s.id === id))
+    .filter(Boolean);
+
+  if (favSolutions.length === 0) {
+    el.innerHTML = `
+      <div style="padding:64px 28px; text-align:center; color:var(--text-tertiary);">
+        <div style="font-size:3rem; margin-bottom:16px;">📌</div>
+        <div style="font-family:var(--font-display); font-style:italic; font-size:1.1rem; color:var(--text-secondary); margin-bottom:8px;">No pinned solutions yet</div>
+        <p style="font-size:0.85rem; margin-bottom:20px; max-width:320px; margin-inline:auto;">Click the 📌 icon on any solution card to pin it here for quick access.</p>
+        <button class="btn-primary" onclick="showView('solutions')">Browse Solutions</button>
+      </div>`;
+    return;
+  }
+
+  el.innerHTML = `
+    <div style="padding:24px 28px 8px;">
+      <h1 style="font-family:var(--font-display); font-style:italic; font-size:1.4rem; font-weight:800; letter-spacing:-0.03em; margin-bottom:4px;">📌 Pinned Solutions</h1>
+      <p style="font-size:0.82rem; color:var(--text-tertiary); margin-bottom:0;">${favSolutions.length} solution${favSolutions.length !== 1 ? 's' : ''} pinned</p>
+    </div>
+    <div class="solutions-grid" style="border-top:1px solid var(--border); margin-top:16px;">
+      ${favSolutions.map((s, i) => cardHTML(s, i * 50)).join('')}
+    </div>`;
+}
+
+// ── Likes ─────────────────────────────────────────────
+if (!App.localLikeDelta) App.localLikeDelta = JSON.parse(localStorage.getItem('sb-like-delta') || '{}');
+
+function toggleLike(id) {
+  const wasLiked = !!App.likes[id];
+  if (wasLiked) {
+    delete App.likes[id];
+    App.localLikeDelta[id] = (App.localLikeDelta[id] || 0) - 1;
+  } else {
+    App.likes[id] = true;
+    App.localLikeDelta[id] = (App.localLikeDelta[id] || 0) + 1;
+  }
+  localStorage.setItem('sb-likes', JSON.stringify(App.likes));
+  localStorage.setItem('sb-like-delta', JSON.stringify(App.localLikeDelta));
+
+  const sol = App.solutions.find(s => s.id === id);
+  if (!sol) return;
+  const newCount = getLikes(sol);
+  const isLiked  = !!App.likes[id];
+
+  // Update card button
+  const btn   = document.getElementById('like-btn-' + id);
+  const count = document.getElementById('like-count-' + id);
+  if (btn)   btn.classList.toggle('liked', isLiked);
+  if (count) count.textContent = formatNum(newCount);
+
+  // Update detail page like button if open
+  const detailBtn   = document.getElementById('detail-like-btn-' + id);
+  const detailCount = document.getElementById('detail-like-count-' + id);
+  if (detailBtn)   detailBtn.classList.toggle('liked', isLiked);
+  if (detailCount) detailCount.textContent = formatNum(newCount);
+
+  toast(isLiked ? '❤️ Liked!' : 'Like removed');
+}
+
+// ── Views ─────────────────────────────────────────────
+function trackView(id) {
+  App.localViews[id] = (App.localViews[id] || 0) + 1;
+  localStorage.setItem('sb-views', JSON.stringify(App.localViews));
+  // Update view count on card if visible
+  const el = document.getElementById('view-count-' + id);
+  const sol = App.solutions.find(s => s.id === id);
+  if (el && sol) el.textContent = formatNum(getViews(sol));
+}
+
+// ── Downloads ─────────────────────────────────────────
+function handleDownload(id, url) {
+  App.localDownloads[id] = (App.localDownloads[id] || 0) + 1;
+  localStorage.setItem('sb-downloads', JSON.stringify(App.localDownloads));
+  // Update card download count
+  const el = document.getElementById('dl-count-' + id);
+  const sol = App.solutions.find(s => s.id === id);
+  if (el && sol) el.textContent = formatNum(getDownloads(sol));
+  // Update detail page count
+  const detailEl = document.getElementById('detail-dl-count-' + id);
+  if (detailEl && sol) detailEl.textContent = formatNum(getDownloads(sol));
+  // Open the download
+  if (url) window.open(url, '_blank');
+}
+
+// ── Share Popup ───────────────────────────────────────
+function openShare(id, title) {
+  const url = location.origin + location.pathname + '#solution/' + id;
+  document.getElementById('share-title').textContent = title;
+  document.getElementById('share-url-input').value   = url;
+  document.getElementById('share-copied').textContent = '';
+  document.getElementById('share-overlay').classList.add('open');
+}
+
+function closeSharePopup() {
+  document.getElementById('share-overlay').classList.remove('open');
+}
+
+function closeShare(e) {
+  if (e.target.id === 'share-overlay') closeSharePopup();
+}
+
+function copyShareUrl() {
+  const input = document.getElementById('share-url-input');
+  navigator.clipboard.writeText(input.value).then(() => {
+    const el = document.getElementById('share-copied');
+    el.textContent = '✓ Copied to clipboard!';
+    setTimeout(() => { el.textContent = ''; }, 2500);
+  });
+}
+
+function mailShare() {
+  const input = document.getElementById('share-url-input');
+  const title = document.getElementById('share-title').textContent;
+  const body  = 'Hi,%0A%0AI thought you might find this useful:%0A%0A' + encodeURIComponent(title) + '%0A' + encodeURIComponent(input.value) + '%0A%0AFound on SolutionBase — a library of production-ready Microsoft Power Platform solutions.';
+  window.location.href = 'mailto:?subject=' + encodeURIComponent('Check out: ' + title) + '&body=' + body;
+}
+
+// ── Typing animation (sidebar tagline) ───────────────
+function startTypingAnimation() {
+  const el     = document.getElementById('typing-tagline');
+  const cursor = document.querySelector('.typing-cursor');
+  if (!el) return;
+  const text   = 'Build smarter. Deliver faster.';
+  let i        = 0;
+  el.textContent = '';
+
+  const type = () => {
+    if (i < text.length) {
+      el.textContent += text[i++];
+      setTimeout(type, 55 + Math.random() * 30);
+    } else {
+      // Blink cursor forever after done
+      if (cursor) cursor.style.animation = 'cursorBlink 1s step-end infinite';
+    }
+  };
+  setTimeout(type, 600); // small delay before starting
+}
+
 function tiltCard(e, wrap) {
   const rect = wrap.getBoundingClientRect();
   const x = e.clientX - rect.left;
@@ -515,6 +797,9 @@ function openDetail(sol, pushState = true) {
   // Track recently viewed
   App.recentlyViewed = [sol.id, ...App.recentlyViewed.filter(id => id !== sol.id)].slice(0, 6);
   localStorage.setItem('sb-recent', JSON.stringify(App.recentlyViewed));
+
+  // Track view
+  trackView(sol.id);
 
   const color = sol.color || '#0078d4';
 
@@ -576,13 +861,23 @@ function openDetail(sol, pushState = true) {
           <svg width="15" height="15" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
           View on GitHub
         </a>
-        <a href="${sol.packagePath}" class="btn-download">
+        <button onclick="handleDownload('${sol.id}','${sol.packagePath}')" class="btn-download">
           <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-          Download Package
-        </a>
-        <button class="btn-outline" onclick="copyLink('${sol.id}')">
-          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
-          Copy Link
+          Download
+          <span id="detail-dl-count-${sol.id}" style="opacity:0.75;font-family:var(--font-mono);font-size:0.78em;">(${formatNum(getDownloads(sol))})</span>
+        </button>
+        <button class="btn-outline detail-like-btn ${App.likes[sol.id] ? 'liked' : ''}"
+                id="detail-like-btn-${sol.id}"
+                onclick="toggleLike('${sol.id}')">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="${App.likes[sol.id] ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+          <span id="detail-like-count-${sol.id}">${formatNum(getLikes(sol))}</span>
+        </button>
+        <button class="btn-outline" onclick="openShare('${sol.id}','${sol.title.replace(/'/g,"\\'")}')">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+          Share
+        </button>
+        <button class="btn-outline" onclick="toggleFavourite('${sol.id}')" id="detail-pin-${sol.id}">
+          📌 ${App.favourites.includes(sol.id) ? 'Pinned' : 'Pin'}
         </button>
       </div>
 
