@@ -4,12 +4,22 @@
     "title": "Employee Onboarding Hub",
     "tool": "Power Apps",
     "useCase": "HR",
-    "tags": ["Canvas App", "SharePoint", "Power Automate", "Adaptive Cards", "Teams"],
+    "tags": [
+      "Canvas App",
+      "SharePoint",
+      "Power Automate",
+      "Adaptive Cards",
+      "Teams"
+    ],
     "difficulty": "Intermediate",
     "status": "Production Ready",
     "version": "2.1.0",
     "lastUpdated": "2024-11-15",
-    "submitter": { "name": "Alex Morgan", "initials": "AM", "color": "#0078d4" },
+    "submitter": {
+      "name": "Alex Morgan",
+      "initials": "AM",
+      "color": "#0078d4"
+    },
     "setupTime": "45m",
     "learnTime": "3h",
     "stars": 247,
@@ -23,27 +33,71 @@
     "readmePath": "solutions/employee-onboarding/README.md",
     "packagePath": "solutions/employee-onboarding/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/employee-onboarding",
-    "features": ["Multi-step onboarding wizard with progress tracking","Document upload with SharePoint integration","Automated notifications via Power Automate","Manager approval workflows","Teams welcome card via Adaptive Cards","HR Dashboard with completion analytics","Mobile-responsive Canvas App design","Role-based access control"],
-    "components": [
-      { "name": "Canvas App", "description": "Main onboarding interface for new hires", "type": "Power Apps" },
-      { "name": "SharePoint Lists", "description": "OnboardingTasks, Employees, Documents lists", "type": "SharePoint" },
-      { "name": "Welcome Flow", "description": "Triggers on new employee record, sends Teams card", "type": "Power Automate" },
-      { "name": "IT Request Flow", "description": "Routes equipment requests to IT helpdesk", "type": "Power Automate" },
-      { "name": "HR Admin App", "description": "Model-driven app for managing onboarding templates", "type": "Power Apps" }
+    "features": [
+      "Multi-step onboarding wizard with progress tracking",
+      "Document upload with SharePoint integration",
+      "Automated notifications via Power Automate",
+      "Manager approval workflows",
+      "Teams welcome card via Adaptive Cards",
+      "HR Dashboard with completion analytics",
+      "Mobile-responsive Canvas App design",
+      "Role-based access control"
     ],
-    "prerequisites": ["Microsoft 365 E3 or above","Power Apps per user or per app license","SharePoint Online","Power Automate standard connectors"]
+    "components": [
+      {
+        "name": "Canvas App",
+        "description": "Main onboarding interface for new hires",
+        "type": "Power Apps"
+      },
+      {
+        "name": "SharePoint Lists",
+        "description": "OnboardingTasks, Employees, Documents lists",
+        "type": "SharePoint"
+      },
+      {
+        "name": "Welcome Flow",
+        "description": "Triggers on new employee record, sends Teams card",
+        "type": "Power Automate"
+      },
+      {
+        "name": "IT Request Flow",
+        "description": "Routes equipment requests to IT helpdesk",
+        "type": "Power Automate"
+      },
+      {
+        "name": "HR Admin App",
+        "description": "Model-driven app for managing onboarding templates",
+        "type": "Power Apps"
+      }
+    ],
+    "prerequisites": [
+      "Microsoft 365 E3 or above",
+      "Power Apps per user or per app license",
+      "SharePoint Online",
+      "Power Automate standard connectors"
+    ]
   },
   {
     "id": "approval-engine",
     "title": "Universal Approval Engine",
     "tool": "Power Automate",
     "useCase": "Automation",
-    "tags": ["Approvals", "SharePoint", "Teams", "HTTP Connector", "Child Flows"],
+    "tags": [
+      "Approvals",
+      "SharePoint",
+      "Teams",
+      "HTTP Connector",
+      "Child Flows"
+    ],
     "difficulty": "Advanced",
     "status": "Production Ready",
     "version": "3.0.2",
     "lastUpdated": "2024-12-01",
-    "submitter": { "name": "Jordan Lee", "initials": "JL", "color": "#0066b8" },
+    "submitter": {
+      "name": "Jordan Lee",
+      "initials": "JL",
+      "color": "#0066b8"
+    },
     "setupTime": "2h",
     "learnTime": "5h",
     "stars": 389,
@@ -57,27 +111,71 @@
     "readmePath": "solutions/approval-engine/README.md",
     "packagePath": "solutions/approval-engine/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/approval-engine",
-    "features": ["Configuration-driven — no code changes for new workflows","Sequential, parallel, and quorum approval modes","Automatic escalation after configurable SLA","Delegation support with audit trail","Teams Adaptive Card approvals","Full audit log to SharePoint","Recall and reassignment capabilities","Email fallback when Teams is unavailable"],
-    "components": [
-      { "name": "Orchestrator Flow", "description": "Core routing engine that reads config and dispatches", "type": "Power Automate" },
-      { "name": "Approval Step Child Flow", "description": "Reusable child flow for each approval step", "type": "Power Automate" },
-      { "name": "Escalation Monitor", "description": "Scheduled flow checking SLA breaches", "type": "Power Automate" },
-      { "name": "Config Lists", "description": "WorkflowDefinitions, ApprovalGroups, AuditLog", "type": "SharePoint" },
-      { "name": "Adaptive Card Templates", "description": "JSON templates for inline Teams approvals", "type": "Teams" }
+    "features": [
+      "Configuration-driven — no code changes for new workflows",
+      "Sequential, parallel, and quorum approval modes",
+      "Automatic escalation after configurable SLA",
+      "Delegation support with audit trail",
+      "Teams Adaptive Card approvals",
+      "Full audit log to SharePoint",
+      "Recall and reassignment capabilities",
+      "Email fallback when Teams is unavailable"
     ],
-    "prerequisites": ["Power Automate Premium (for HTTP connector)","SharePoint Online","Microsoft Teams","Azure AD for user lookup"]
+    "components": [
+      {
+        "name": "Orchestrator Flow",
+        "description": "Core routing engine that reads config and dispatches",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Approval Step Child Flow",
+        "description": "Reusable child flow for each approval step",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Escalation Monitor",
+        "description": "Scheduled flow checking SLA breaches",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Config Lists",
+        "description": "WorkflowDefinitions, ApprovalGroups, AuditLog",
+        "type": "SharePoint"
+      },
+      {
+        "name": "Adaptive Card Templates",
+        "description": "JSON templates for inline Teams approvals",
+        "type": "Teams"
+      }
+    ],
+    "prerequisites": [
+      "Power Automate Premium (for HTTP connector)",
+      "SharePoint Online",
+      "Microsoft Teams",
+      "Azure AD for user lookup"
+    ]
   },
   {
     "id": "modern-intranet",
     "title": "Modern Intranet Starter Kit",
     "tool": "SharePoint",
     "useCase": "Reporting",
-    "tags": ["SPFx", "React", "Viva Connections", "PnP", "TypeScript"],
+    "tags": [
+      "SPFx",
+      "React",
+      "Viva Connections",
+      "PnP",
+      "TypeScript"
+    ],
     "difficulty": "Advanced",
     "status": "Production Ready",
     "version": "1.4.0",
     "lastUpdated": "2024-10-20",
-    "submitter": { "name": "Sam Rivera", "initials": "SR", "color": "#038387" },
+    "submitter": {
+      "name": "Sam Rivera",
+      "initials": "SR",
+      "color": "#038387"
+    },
     "setupTime": "3h",
     "learnTime": "8h",
     "stars": 512,
@@ -91,27 +189,71 @@
     "readmePath": "solutions/modern-intranet/README.md",
     "packagePath": "solutions/modern-intranet/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/modern-intranet",
-    "features": ["9 custom SPFx web parts included","News aggregator with audience targeting","Interactive org chart from Azure AD","Events calendar with SharePoint list integration","Quick links with drag-and-drop reordering","One-click .sppkg deployment","Site template for automated provisioning","Fluent UI design system"],
-    "components": [
-      { "name": "News Aggregator Web Part", "description": "Pulls from multiple SharePoint news sources", "type": "SPFx" },
-      { "name": "OrgChart Web Part", "description": "Renders org hierarchy from Azure AD Graph API", "type": "SPFx" },
-      { "name": "Events Calendar Web Part", "description": "Calendar view backed by SharePoint Events list", "type": "SPFx" },
-      { "name": "Quick Links Web Part", "description": "Configurable tile grid with custom icons", "type": "SPFx" },
-      { "name": "Site Template", "description": "PnP provisioning template for automated setup", "type": "SharePoint" }
+    "features": [
+      "9 custom SPFx web parts included",
+      "News aggregator with audience targeting",
+      "Interactive org chart from Azure AD",
+      "Events calendar with SharePoint list integration",
+      "Quick links with drag-and-drop reordering",
+      "One-click .sppkg deployment",
+      "Site template for automated provisioning",
+      "Fluent UI design system"
     ],
-    "prerequisites": ["SharePoint Online","Node.js 18+ for development","SharePoint Framework 1.18+","Tenant App Catalog access"]
+    "components": [
+      {
+        "name": "News Aggregator Web Part",
+        "description": "Pulls from multiple SharePoint news sources",
+        "type": "SPFx"
+      },
+      {
+        "name": "OrgChart Web Part",
+        "description": "Renders org hierarchy from Azure AD Graph API",
+        "type": "SPFx"
+      },
+      {
+        "name": "Events Calendar Web Part",
+        "description": "Calendar view backed by SharePoint Events list",
+        "type": "SPFx"
+      },
+      {
+        "name": "Quick Links Web Part",
+        "description": "Configurable tile grid with custom icons",
+        "type": "SPFx"
+      },
+      {
+        "name": "Site Template",
+        "description": "PnP provisioning template for automated setup",
+        "type": "SharePoint"
+      }
+    ],
+    "prerequisites": [
+      "SharePoint Online",
+      "Node.js 18+ for development",
+      "SharePoint Framework 1.18+",
+      "Tenant App Catalog access"
+    ]
   },
   {
     "id": "sharepoint-provisioner",
     "title": "SharePoint Site Provisioner",
     "tool": "PowerShell",
     "useCase": "Automation",
-    "tags": ["PnP PowerShell", "Site Provisioning", "Automation", "Teams", "Azure Automation"],
+    "tags": [
+      "PnP PowerShell",
+      "Site Provisioning",
+      "Automation",
+      "Teams",
+      "Azure Automation"
+    ],
     "difficulty": "Intermediate",
     "status": "Production Ready",
     "version": "2.0.1",
     "lastUpdated": "2024-11-30",
-    "submitter": { "name": "Chris Patel", "initials": "CP", "color": "#5c2d91" },
+    "submitter": {
+      "name": "Chris Patel",
+      "initials": "CP",
+      "color": "#5c2d91"
+    },
     "setupTime": "1h",
     "learnTime": "4h",
     "stars": 198,
@@ -125,27 +267,71 @@
     "readmePath": "solutions/sharepoint-provisioner/README.md",
     "packagePath": "solutions/sharepoint-provisioner/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/sharepoint-provisioner",
-    "features": ["JSON-driven site templates","Creates sites, libraries, lists, and content types","Applies permission groups and role assignments","Creates linked Teams team with channels","Dry-run mode for safe testing","Comprehensive logging to file and console","Parallel provisioning for bulk operations","Azure Automation runbook compatible"],
-    "components": [
-      { "name": "Invoke-SiteProvisioning.ps1", "description": "Main entry point script", "type": "PowerShell" },
-      { "name": "New-TeamSite.ps1", "description": "Creates team site with standard libraries", "type": "PowerShell" },
-      { "name": "Set-SitePermissions.ps1", "description": "Applies permission templates", "type": "PowerShell" },
-      { "name": "New-TeamsTeam.ps1", "description": "Creates Teams team from SharePoint site", "type": "PowerShell" },
-      { "name": "templates/", "description": "JSON site template examples", "type": "Config" }
+    "features": [
+      "JSON-driven site templates",
+      "Creates sites, libraries, lists, and content types",
+      "Applies permission groups and role assignments",
+      "Creates linked Teams team with channels",
+      "Dry-run mode for safe testing",
+      "Comprehensive logging to file and console",
+      "Parallel provisioning for bulk operations",
+      "Azure Automation runbook compatible"
     ],
-    "prerequisites": ["PnP.PowerShell module 2.x","PowerShell 7.2+","SharePoint Admin role","Azure AD App Registration (for unattended)"]
+    "components": [
+      {
+        "name": "Invoke-SiteProvisioning.ps1",
+        "description": "Main entry point script",
+        "type": "PowerShell"
+      },
+      {
+        "name": "New-TeamSite.ps1",
+        "description": "Creates team site with standard libraries",
+        "type": "PowerShell"
+      },
+      {
+        "name": "Set-SitePermissions.ps1",
+        "description": "Applies permission templates",
+        "type": "PowerShell"
+      },
+      {
+        "name": "New-TeamsTeam.ps1",
+        "description": "Creates Teams team from SharePoint site",
+        "type": "PowerShell"
+      },
+      {
+        "name": "templates/",
+        "description": "JSON site template examples",
+        "type": "Config"
+      }
+    ],
+    "prerequisites": [
+      "PnP.PowerShell module 2.x",
+      "PowerShell 7.2+",
+      "SharePoint Admin role",
+      "Azure AD App Registration (for unattended)"
+    ]
   },
   {
     "id": "leave-management",
     "title": "Leave Management System",
     "tool": "Power Apps",
     "useCase": "HR",
-    "tags": ["Canvas App", "Power Automate", "Dataverse", "Teams", "Model-Driven"],
+    "tags": [
+      "Canvas App",
+      "Power Automate",
+      "Dataverse",
+      "Teams",
+      "Model-Driven"
+    ],
     "difficulty": "Beginner",
     "status": "Production Ready",
     "version": "1.2.0",
     "lastUpdated": "2024-09-15",
-    "submitter": { "name": "Maya Chen", "initials": "MC", "color": "#107c10" },
+    "submitter": {
+      "name": "Maya Chen",
+      "initials": "MC",
+      "color": "#107c10"
+    },
     "setupTime": "30m",
     "learnTime": "1h",
     "stars": 334,
@@ -159,27 +345,71 @@
     "readmePath": "solutions/leave-management/README.md",
     "packagePath": "solutions/leave-management/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/leave-management",
-    "features": ["Employee self-service leave request portal","Real-time leave balance display","Manager approval via Teams Adaptive Cards","Multi-level approval for extended leave","Calendar view of team leave for conflict detection","HR admin dashboard with leave analytics","Public holiday management","Annual balance rollover automation"],
-    "components": [
-      { "name": "Employee Canvas App", "description": "Self-service leave request interface", "type": "Power Apps" },
-      { "name": "HR Model-Driven App", "description": "Admin interface for policy and reporting", "type": "Power Apps" },
-      { "name": "Approval Flow", "description": "Routes requests to manager with Teams card", "type": "Power Automate" },
-      { "name": "Balance Recalculation Flow", "description": "Scheduled monthly balance updates", "type": "Power Automate" },
-      { "name": "Dataverse Tables", "description": "LeaveRequests, Employees, LeaveTypes, Balances", "type": "Dataverse" }
+    "features": [
+      "Employee self-service leave request portal",
+      "Real-time leave balance display",
+      "Manager approval via Teams Adaptive Cards",
+      "Multi-level approval for extended leave",
+      "Calendar view of team leave for conflict detection",
+      "HR admin dashboard with leave analytics",
+      "Public holiday management",
+      "Annual balance rollover automation"
     ],
-    "prerequisites": ["Power Apps per user license","Dataverse environment","Power Automate standard","Microsoft Teams"]
+    "components": [
+      {
+        "name": "Employee Canvas App",
+        "description": "Self-service leave request interface",
+        "type": "Power Apps"
+      },
+      {
+        "name": "HR Model-Driven App",
+        "description": "Admin interface for policy and reporting",
+        "type": "Power Apps"
+      },
+      {
+        "name": "Approval Flow",
+        "description": "Routes requests to manager with Teams card",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Balance Recalculation Flow",
+        "description": "Scheduled monthly balance updates",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Dataverse Tables",
+        "description": "LeaveRequests, Employees, LeaveTypes, Balances",
+        "type": "Dataverse"
+      }
+    ],
+    "prerequisites": [
+      "Power Apps per user license",
+      "Dataverse environment",
+      "Power Automate standard",
+      "Microsoft Teams"
+    ]
   },
   {
     "id": "document-lifecycle",
     "title": "Document Lifecycle Manager",
     "tool": "SharePoint",
     "useCase": "Reporting",
-    "tags": ["SPFx", "Document Management", "Approval", "Version Control", "Compliance"],
+    "tags": [
+      "SPFx",
+      "Document Management",
+      "Approval",
+      "Version Control",
+      "Compliance"
+    ],
     "difficulty": "Advanced",
     "status": "Beta",
     "version": "0.9.2",
     "lastUpdated": "2024-12-10",
-    "submitter": { "name": "Dev Singh", "initials": "DS", "color": "#ca5010" },
+    "submitter": {
+      "name": "Dev Singh",
+      "initials": "DS",
+      "color": "#ca5010"
+    },
     "setupTime": "2h",
     "learnTime": "6h",
     "stars": 156,
@@ -193,26 +423,67 @@
     "readmePath": "solutions/document-lifecycle/README.md",
     "packagePath": "solutions/document-lifecycle/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/document-lifecycle",
-    "features": ["Configurable document state machine","Inline approval from document library view","Version locking at approval milestones","Document expiry tracking and notifications","Bulk state transitions for administrators","Audit trail overlay in document panel","Works with any SharePoint document library","Export compliance reports to Excel"],
-    "components": [
-      { "name": "DocLifecycle Web Part", "description": "Main library view overlay web part", "type": "SPFx" },
-      { "name": "Approval Panel Extension", "description": "Field customizer for state display", "type": "SPFx" },
-      { "name": "Expiry Monitor Flow", "description": "Weekly scheduled expiry check", "type": "Power Automate" },
-      { "name": "State Config List", "description": "SharePoint list defining state transitions", "type": "SharePoint" }
+    "features": [
+      "Configurable document state machine",
+      "Inline approval from document library view",
+      "Version locking at approval milestones",
+      "Document expiry tracking and notifications",
+      "Bulk state transitions for administrators",
+      "Audit trail overlay in document panel",
+      "Works with any SharePoint document library",
+      "Export compliance reports to Excel"
     ],
-    "prerequisites": ["SharePoint Online","SharePoint Framework 1.18+","Power Automate (for notifications)","Site Collection Admin for deployment"]
+    "components": [
+      {
+        "name": "DocLifecycle Web Part",
+        "description": "Main library view overlay web part",
+        "type": "SPFx"
+      },
+      {
+        "name": "Approval Panel Extension",
+        "description": "Field customizer for state display",
+        "type": "SPFx"
+      },
+      {
+        "name": "Expiry Monitor Flow",
+        "description": "Weekly scheduled expiry check",
+        "type": "Power Automate"
+      },
+      {
+        "name": "State Config List",
+        "description": "SharePoint list defining state transitions",
+        "type": "SharePoint"
+      }
+    ],
+    "prerequisites": [
+      "SharePoint Online",
+      "SharePoint Framework 1.18+",
+      "Power Automate (for notifications)",
+      "Site Collection Admin for deployment"
+    ]
   },
   {
     "id": "helpdesk-teams-bot",
     "title": "IT Helpdesk Teams Bot",
     "tool": "Power Automate",
     "useCase": "Automation",
-    "tags": ["Teams Bot", "HTTP", "SharePoint", "Adaptive Cards", "SLA", "ITSM"],
+    "tags": [
+      "Teams Bot",
+      "HTTP",
+      "SharePoint",
+      "Adaptive Cards",
+      "SLA",
+      "ITSM"
+    ],
     "difficulty": "Advanced",
     "status": "Production Ready",
     "version": "2.3.0",
     "lastUpdated": "2024-11-05",
-    "submitter": { "name": "Taylor Brooks", "initials": "TB", "color": "#6264a7" },
+    "submitter": {
+      "name": "Taylor Brooks",
+      "initials": "TB",
+      "color": "#6264a7"
+    },
     "setupTime": "3h",
     "learnTime": "5h",
     "stars": 421,
@@ -226,27 +497,72 @@
     "readmePath": "solutions/helpdesk-teams-bot/README.md",
     "packagePath": "solutions/helpdesk-teams-bot/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/helpdesk-teams-bot",
-    "features": ["Conversational ticket submission in Teams","Category-based routing to IT sub-teams","Proactive status update notifications","SLA timer tracking with escalation","Screenshot and attachment support","IT staff management view in Teams channel","Knowledge base search before ticket creation","Weekly SLA compliance report"],
-    "components": [
-      { "name": "Bot Orchestrator Flow", "description": "HTTP trigger flow handling all bot messages", "type": "Power Automate" },
-      { "name": "Ticket Router Flow", "description": "Routes tickets to correct team channel", "type": "Power Automate" },
-      { "name": "SLA Monitor Flow", "description": "Scheduled SLA breach detector", "type": "Power Automate" },
-      { "name": "Tickets SharePoint List", "description": "Ticket storage with full metadata", "type": "SharePoint" },
-      { "name": "Adaptive Card Templates", "description": "JSON templates for all bot messages", "type": "Teams" }
+    "features": [
+      "Conversational ticket submission in Teams",
+      "Category-based routing to IT sub-teams",
+      "Proactive status update notifications",
+      "SLA timer tracking with escalation",
+      "Screenshot and attachment support",
+      "IT staff management view in Teams channel",
+      "Knowledge base search before ticket creation",
+      "Weekly SLA compliance report"
     ],
-    "prerequisites": ["Power Automate Premium (HTTP trigger)","Microsoft Teams","SharePoint Online","Teams App deployment permissions"]
+    "components": [
+      {
+        "name": "Bot Orchestrator Flow",
+        "description": "HTTP trigger flow handling all bot messages",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Ticket Router Flow",
+        "description": "Routes tickets to correct team channel",
+        "type": "Power Automate"
+      },
+      {
+        "name": "SLA Monitor Flow",
+        "description": "Scheduled SLA breach detector",
+        "type": "Power Automate"
+      },
+      {
+        "name": "Tickets SharePoint List",
+        "description": "Ticket storage with full metadata",
+        "type": "SharePoint"
+      },
+      {
+        "name": "Adaptive Card Templates",
+        "description": "JSON templates for all bot messages",
+        "type": "Teams"
+      }
+    ],
+    "prerequisites": [
+      "Power Automate Premium (HTTP trigger)",
+      "Microsoft Teams",
+      "SharePoint Online",
+      "Teams App deployment permissions"
+    ]
   },
   {
     "id": "m365-audit",
     "title": "M365 Tenant Audit Reporter",
     "tool": "PowerShell",
     "useCase": "Finance",
-    "tags": ["Audit", "Compliance", "Exchange", "SharePoint", "Azure AD", "MFA"],
+    "tags": [
+      "Audit",
+      "Compliance",
+      "Exchange",
+      "SharePoint",
+      "Azure AD",
+      "MFA"
+    ],
     "difficulty": "Intermediate",
     "status": "Production Ready",
     "version": "3.1.0",
     "lastUpdated": "2024-12-05",
-    "submitter": { "name": "Riley Kim", "initials": "RK", "color": "#d13438" },
+    "submitter": {
+      "name": "Riley Kim",
+      "initials": "RK",
+      "color": "#d13438"
+    },
     "setupTime": "1h",
     "learnTime": "3h",
     "stars": 287,
@@ -260,14 +576,83 @@
     "readmePath": "solutions/m365-audit/README.md",
     "packagePath": "solutions/m365-audit/package.zip",
     "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/tree/main/solutions/m365-audit",
-    "features": ["SharePoint external sharing audit","Guest user access review","MFA adoption report by department","Inactive user detection (90/180/365 day)","Teams without owners detection","Service account license usage","Mailbox delegation audit","HTML dashboard and CSV export"],
-    "components": [
-      { "name": "Start-TenantAudit.ps1", "description": "Main script that runs all audit modules", "type": "PowerShell" },
-      { "name": "Get-SharePointAudit.ps1", "description": "SharePoint permissions and sharing audit", "type": "PowerShell" },
-      { "name": "Get-UserAudit.ps1", "description": "Azure AD user activity and MFA audit", "type": "PowerShell" },
-      { "name": "Get-TeamsAudit.ps1", "description": "Teams governance audit", "type": "PowerShell" },
-      { "name": "Export-HtmlReport.ps1", "description": "Renders HTML dashboard from audit data", "type": "PowerShell" }
+    "features": [
+      "SharePoint external sharing audit",
+      "Guest user access review",
+      "MFA adoption report by department",
+      "Inactive user detection (90/180/365 day)",
+      "Teams without owners detection",
+      "Service account license usage",
+      "Mailbox delegation audit",
+      "HTML dashboard and CSV export"
     ],
-    "prerequisites": ["Microsoft Graph PowerShell SDK","PnP.PowerShell module","Exchange Online Management module","Global Reader or higher role"]
+    "components": [
+      {
+        "name": "Start-TenantAudit.ps1",
+        "description": "Main script that runs all audit modules",
+        "type": "PowerShell"
+      },
+      {
+        "name": "Get-SharePointAudit.ps1",
+        "description": "SharePoint permissions and sharing audit",
+        "type": "PowerShell"
+      },
+      {
+        "name": "Get-UserAudit.ps1",
+        "description": "Azure AD user activity and MFA audit",
+        "type": "PowerShell"
+      },
+      {
+        "name": "Get-TeamsAudit.ps1",
+        "description": "Teams governance audit",
+        "type": "PowerShell"
+      },
+      {
+        "name": "Export-HtmlReport.ps1",
+        "description": "Renders HTML dashboard from audit data",
+        "type": "PowerShell"
+      }
+    ],
+    "prerequisites": [
+      "Microsoft Graph PowerShell SDK",
+      "PnP.PowerShell module",
+      "Exchange Online Management module",
+      "Global Reader or higher role"
+    ]
+  },
+  {
+    "id": "chat-bot",
+    "title": "Chat Bot",
+    "tool": "Power Apps",
+    "tags": [
+      "Teams"
+    ],
+    "difficulty": "Beginner",
+    "status": "Production Ready",
+    "version": "1.0.0",
+    "lastUpdated": "2026-04-29",
+    "stars": 0,
+    "downloads": 0,
+    "featured": false,
+    "icon": ":)",
+    "color": "#0078d4",
+    "description": "test bot",
+    "readmePath": "solutions/chat-bot/README.md",
+    "packagePath": "https://video.sap.com/playlist/dedicated/228770933/1_6asy4mb0/1_npkv882l",
+    "githubRepo": "https://video.sap.com/playlist/dedicated/228770933/1_6asy4mb0/1_npkv882l",
+    "features": [
+      "test bot"
+    ],
+    "components": [
+      {
+        "type": "Unknown",
+        "name": "test bot",
+        "description": ""
+      }
+    ],
+    "prerequisites": [
+      "test bot"
+    ],
+    "issueRef": 11
   }
 ]
