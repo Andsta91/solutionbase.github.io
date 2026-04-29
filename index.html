@@ -20,7 +20,9 @@
         <div class="logo-mark">SB</div>
         <span class="logo-name">SolutionBase</span>
       </div>
-      <div class="logo-tagline">Power Platform · SharePoint · PowerShell</div>
+      <div class="logo-tagline">
+        <span id="typing-tagline"></span><span class="typing-cursor">|</span>
+      </div>
     </div>
 
     <div class="sidebar-search">
@@ -34,6 +36,7 @@
       <div class="sidebar-section-label">Navigation</div>
       <div class="sidebar-link active" data-nav="home"><span class="link-icon">🏠</span>Home</div>
       <div class="sidebar-link" data-nav="solutions"><span class="link-icon">📚</span>All Solutions<span class="link-count" data-cat-count="all">0</span></div>
+      <div class="sidebar-link" data-nav="favourites"><span class="link-icon">📌</span>Favourites<span class="link-count" id="fav-count">0</span></div>
 
       <div class="sidebar-section-label" style="margin-top:8px">Categories</div>
       <div class="sidebar-link" data-nav="Power Apps"><span class="link-icon">📱</span>Power Apps<span class="link-count" data-cat-count="Power Apps">0</span></div>
@@ -234,11 +237,35 @@
     </div>
 
     <!-- VIEW: ABOUT -->
-    <div id="view-about" class="view">
-      <!-- JS rendered -->
-    </div>
+    <div id="view-about" class="view"></div>
+
+    <!-- VIEW: FAVOURITES -->
+    <div id="view-favourites" class="view"></div>
 
   </main>
+</div>
+
+<!-- Share Popup -->
+<div class="share-overlay" id="share-overlay" onclick="closeShare(event)">
+  <div class="share-popup" id="share-popup">
+    <div class="share-header">
+      <div class="share-title" id="share-title"></div>
+      <button class="share-close" onclick="closeSharePopup()">✕</button>
+    </div>
+    <div class="share-body">
+      <div style="font-size:0.72rem; color:var(--text-tertiary); font-family:var(--font-mono); margin-bottom:6px; text-transform:uppercase; letter-spacing:0.08em;">Link</div>
+      <div class="share-url-row">
+        <input class="share-url-input" id="share-url-input" readonly />
+        <button class="share-icon-btn" onclick="copyShareUrl()" title="Copy link">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+        </button>
+        <button class="share-icon-btn" onclick="mailShare()" title="Share via email">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
+        </button>
+      </div>
+      <div id="share-copied" style="font-size:0.72rem; color:var(--green); font-family:var(--font-mono); height:16px; margin-top:4px;"></div>
+    </div>
+  </div>
 </div>
 
 <!-- COMMAND PALETTE -->
