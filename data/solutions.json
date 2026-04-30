@@ -715,5 +715,42 @@
       "street"
     ],
     "issueRef": 13
+  },
+  {
+    "id": "hello-world",
+    "title": "Hello world",
+    "tool": "Power Apps",
+    "tags": [
+      "sharepoint",
+      "http connector",
+      "power autimate"
+    ],
+    "difficulty": "Beginner",
+    "status": "Production Ready",
+    "version": "1.0.1",
+    "lastUpdated": "2026-04-30",
+    "stars": 0,
+    "downloads": 0,
+    "featured": false,
+    "icon": "https://th.bing.com/th/id/OIP.Bt-R2uvwsOCLjkzPxLEumgHaHa?w=167&h=180&c=7&r=0&o=7&dpr=1.6&pid=1.7&rm=3",
+    "color": "#FF5722",
+    "description": "hello  <img width=\"462\" height=\"361\" alt=\"Image\" src=\"https://github.com/user-attachments/assets/840599e2-dda3-4ab1-801d-52ca7a1c493a\" />",
+    "readmePath": "solutions/hello-world/README.md",
+    "packagePath": "https://github.com/Andsta91/solutionbase.github.io/package",
+    "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/",
+    "features": [
+      "hello"
+    ],
+    "components": [
+      {
+        "type": "Unknown",
+        "name": "hall",
+        "description": ""
+      }
+    ],
+    "prerequisites": [
+      "oll"
+    ],
+    "issueRef": 15
   }
 ]
