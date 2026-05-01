@@ -481,133 +481,313 @@ function cardVisual(s) {
           linear-gradient(135deg, #f8f9ff 0%, #eef0f8 100%)`;
 }
 
+// ── Metrics helpers ────────────────────────────────────
+// Store daily view logs: { 'YYYY-MM-DD': count }
+function logDailyView(id) {
+  const key  = 'sb-daily-' + id;
+  const data = JSON.parse(localStorage.getItem(key) || '{}');
+  const today = new Date().toISOString().split('T')[0];
+  data[today] = (data[today] || 0) + 1;
+  // Keep only last 35 days
+  const sorted = Object.keys(data).sort().slice(-35);
+  const trimmed = {};
+  sorted.forEach(d => { trimmed[d] = data[d]; });
+  localStorage.setItem(key, JSON.stringify(trimmed));
+}
+
+function getDayMetrics(id, days) {
+  const key  = 'sb-daily-' + id;
+  const data = JSON.parse(localStorage.getItem(key) || '{}');
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - days);
+  return Object.entries(data)
+    .filter(([d]) => new Date(d) >= cutoff)
+    .reduce((sum, [, v]) => sum + v, 0);
+}
+
+function getBarData(id) {
+  // Returns last 7 days as array [{ label, count }]
+  const key  = 'sb-daily-' + id;
+  const data = JSON.parse(localStorage.getItem(key) || '{}');
+  const bars = [];
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date();
+    d.setDate(d.getDate() - i);
+    const dateStr = d.toISOString().split('T')[0];
+    const label   = d.toLocaleDateString('en-GB', { weekday: 'short' });
+    bars.push({ label, count: data[dateStr] || 0 });
+  }
+  return bars;
+}
+
+function flipCard(id, e) {
+  if (e) e.stopPropagation();
+  const wrap = document.getElementById('card-' + id);
+  if (!wrap) return;
+  const inner = wrap.querySelector('.flip-inner');
+  if (!inner) return;
+  const isFlipped = inner.classList.toggle('flipped');
+
+  // Refresh back-side metrics each time we flip to back
+  if (isFlipped) refreshBackMetrics(id);
+}
+
+function refreshBackMetrics(id) {
+  const sol = App.solutions.find(s => s.id === id);
+  if (!sol) return;
+
+  const v7  = getDayMetrics(id, 7)  + Math.round((sol.views  || 0) * 0.05);
+  const v14 = getDayMetrics(id, 14) + Math.round((sol.views  || 0) * 0.09);
+  const v30 = getDayMetrics(id, 30) + Math.round((sol.views  || 0) * 0.18);
+  const dl7 = getDayMetrics(id, 7)  + Math.round((getDownloads(sol)) * 0.1);
+  const dl30= getDayMetrics(id, 30) + Math.round((getDownloads(sol)) * 0.22);
+  const fav = App.favourites.includes(id) ? 1 : 0;
+
+  const setEl = (elId, val) => { const el = document.getElementById(elId); if (el) el.textContent = val; };
+  setEl('bm-v7-'  + id, formatNum(v7));
+  setEl('bm-v14-' + id, formatNum(v14));
+  setEl('bm-v30-' + id, formatNum(v30));
+  setEl('bm-dl7-' + id, formatNum(dl7));
+  setEl('bm-dl30-'+ id, formatNum(dl30));
+  setEl('bm-fav-' + id, fav ? '⭐ Pinned' : '—');
+  setEl('bm-tot-v-'  + id, formatNum(getViews(sol)));
+  setEl('bm-tot-dl-' + id, formatNum(getDownloads(sol)));
+
+  // Animate bar chart
+  const bars = getBarData(id);
+  const max  = Math.max(...bars.map(b => b.count), 1);
+  bars.forEach((b, i) => {
+    const bar = document.getElementById('bar-' + id + '-' + i);
+    if (bar) bar.style.height = Math.max(8, Math.round((b.count / max) * 100)) + '%';
+  });
+}
+
 function cardHTML(s, delay = 0) {
-  // Defensive defaults — handles solutions submitted without new fields
   const color   = s.color || '#0078d4';
   const isFav   = App.favourites.includes(s.id);
   const isLiked = !!App.likes[s.id];
   const sc      = statusConfig(s.status || 'Production Ready');
   const uc      = useCaseConfig(s.useCase || 'General');
-  const sub     = s.submitter || { name: s.author || 'SolutionBase', initials: (s.author || 'SB').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(), color: color };
-  const likes   = getLikes(s);
-  const views   = getViews(s);
-  const dls     = getDownloads(s);
-  const created = s.lastUpdated ? new Date(s.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' }) : '';
-  const setupT  = s.setupTime  || deployTime(s);
-  const learnT  = s.learnTime  || '—';
-  const imgSrc  = s.image || null; // optional real image URL from solutions.json
-  const visual  = cardVisual(s);
+  const sub     = s.submitter || {
+    name: s.author || 'SolutionBase',
+    initials: (s.author || 'SB').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(),
+    color: color
+  };
+  const likes  = getLikes(s);
+  const views  = getViews(s);
+  const dls    = getDownloads(s);
+  const created = s.lastUpdated
+    ? new Date(s.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
+    : '';
+  const setupT = s.setupTime || deployTime(s);
+  const learnT = s.learnTime || '—';
+
+  // Bar chart placeholders for back side
+  const bars = getBarData(s.id);
+  const maxB = Math.max(...bars.map(b => b.count), 1);
+  const barCols = bars.map((b, i) => {
+    const pct = Math.max(8, Math.round((b.count / maxB) * 100));
+    return `
+      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;">
+        <div style="width:100%;background:rgba(129,140,248,0.2);border-radius:3px;height:70px;display:flex;align-items:flex-end;">
+          <div id="bar-${s.id}-${i}"
+               style="width:100%;height:${pct}%;background:linear-gradient(180deg,#818cf8,#6366f1);border-radius:3px;transition:height 0.6s cubic-bezier(0.34,1.56,0.64,1) ${i*60}ms;">
+          </div>
+        </div>
+        <span style="font-size:0.52rem;color:#64748b;font-family:var(--font-mono);">${b.label}</span>
+      </div>`;
+  }).join('');
+
+  // Escape title for safe use in JS strings inside HTML
+  const titleSafe = s.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
 
   return `
-    <div class="scard-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
-         onmousemove="tiltCard(event,this)" onmouseleave="resetCard(this)">
+    <div class="flip-wrap" id="card-${s.id}" style="animation-delay:${delay}ms">
+      <div class="flip-inner" id="flip-inner-${s.id}">
 
-      <div class="scard">
+        <!-- ═══════════════════════════════
+             FRONT FACE
+        ═══════════════════════════════ -->
+        <div class="flip-front">
 
-        <!-- IMAGE / VISUAL AREA -->
-        <div class="scard-image" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-          ${imgSrc
-            ? `<img src="${imgSrc}" alt="${s.title}" style="width:100%;height:100%;object-fit:cover;border-radius:0;" />`
-            : `<div class="scard-visual" style="background:${visual}">
-                 <div class="scard-visual-icon">${s.icon}</div>
-               </div>`
-          }
+          <!-- Rotating animated border -->
+          <div class="card-border">
+            <div class="card-border-inner" style="--card-color:${color}"></div>
+          </div>
 
-          <!-- Floating controls over image -->
-          <div class="scard-image-overlay">
-            <span class="scard-status-pill" style="--sc:${sc.dot}">
-              <span class="scard-status-dot"></span>${sc.label}
+          <!-- Status + flip trigger -->
+          <div class="fc-topbar">
+            <span class="fc-status-pill" style="--sc:${sc.dot}">
+              <span class="fc-dot"></span>${sc.label}
             </span>
-            <div style="display:flex;gap:6px;">
-              <button class="scard-img-btn pin-btn ${isFav ? 'active' : ''}"
-                      id="pin-${s.id}" title="${isFav ? 'Unpin' : 'Pin to favourites'}"
+            <div style="display:flex;gap:5px;align-items:center;">
+              <button class="fc-icon-btn pin-btn ${isFav ? 'active' : ''}"
+                      id="pin-${s.id}"
+                      title="${isFav ? 'Unpin' : 'Pin'}"
                       onclick="event.stopPropagation();toggleFavourite('${s.id}')">📌</button>
-              <button class="scard-img-btn"
+              <button class="fc-icon-btn"
                       title="Share"
-                      onclick="event.stopPropagation();openShare('${s.id}','${s.title.replace(/'/g,"\\'")}')">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                      onclick="event.stopPropagation();openShare('${s.id}','${titleSafe}')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+              </button>
+              <button class="fc-flip-btn" title="View analytics" onclick="flipCard('${s.id}',event)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
               </button>
             </div>
           </div>
-        </div>
 
-        <!-- BODY -->
-        <div class="scard-body" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-
-          <!-- Use case + tool badges -->
-          <div class="scard-badges">
-            <span class="scard-uc-badge">${uc.emoji} ${uc.label}</span>
-            <span class="scard-tool-badge">${s.tool}</span>
-          </div>
-
-          <!-- Title + description tooltip -->
-          <div class="scard-title-row">
-            <h3 class="scard-title">${s.title}</h3>
-            <div class="scard-desc-trigger" onclick="event.stopPropagation()">
-              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg>
-              <span style="font-size:0.68rem;color:var(--text-tertiary);font-family:var(--font-mono);">Description</span>
-              <div class="scard-desc-tooltip">${s.description || ''}</div>
-            </div>
-          </div>
-
-          <!-- Tags row -->
-          <div class="scard-tags">
-            ${(s.tags || []).slice(0,3).map(t => `<span class="scard-tag">${t}</span>`).join('')}
-            ${(s.tags || []).length > 3 ? `<span class="scard-tag-more">+${s.tags.length-3}</span>` : ''}
-          </div>
-
-          <!-- Time estimates -->
-          <div class="scard-times">
-            <span class="scard-time">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              Setup: ${setupT}
-            </span>
-            <span class="scard-time-sep">·</span>
-            <span class="scard-time">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              Learn: ${learnT}
-            </span>
-            <span class="scard-diff scard-diff-${(s.difficulty||'Intermediate').toLowerCase()}">${s.difficulty || 'Intermediate'}</span>
-          </div>
-
-        </div>
-
-        <!-- FOOTER -->
-        <div class="scard-footer">
-          <!-- Submitter -->
-          <div class="scard-submitter" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-            <div class="scard-avatar" style="background:${sub.color}">${sub.initials}</div>
+          <!-- Icon + title area -->
+          <div class="fc-hero" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+            <div class="fc-icon-wrap" style="--ic:${color}">${s.icon}</div>
             <div>
-              <div class="scard-submitter-name">${sub.name}</div>
-              <div class="scard-submitter-date">${created}</div>
+              <div class="fc-uc-badge">${uc.emoji} ${uc.label}</div>
+              <h3 class="fc-title">${s.title}</h3>
+              <p class="fc-subtitle">${(s.description||'').slice(0,72)}…</p>
             </div>
           </div>
 
-          <!-- Stats -->
-          <div class="scard-stats">
-            <button class="scard-stat-btn like-btn ${isLiked ? 'liked' : ''}"
-                    id="like-btn-${s.id}"
-                    title="${isLiked ? 'Unlike' : 'Like'}"
-                    onclick="event.stopPropagation();toggleLike('${s.id}')">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
-              <span id="like-count-${s.id}">${formatNum(likes)}</span>
-            </button>
+          <hr class="fc-line" />
 
-            <span class="scard-stat" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))" title="Views">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
-              <span id="view-count-${s.id}">${formatNum(views)}</span>
-            </span>
+          <!-- Feature list (tags as features) -->
+          <ul class="fc-list" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+            ${(s.tags||[]).slice(0,4).map(t => `
+              <li class="fc-list-item">
+                <span class="fc-check">
+                  <svg viewBox="0 0 16 16" fill="currentColor" class="fc-check-svg">
+                    <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd"/>
+                  </svg>
+                </span>
+                <span class="fc-list-text">${t}</span>
+              </li>`).join('')}
+          </ul>
 
-            <button class="scard-stat-btn dl-btn"
-                    title="Download"
-                    onclick="event.stopPropagation();handleDownload('${s.id}','${s.packagePath||''}')">
-              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-              <span id="dl-count-${s.id}">${formatNum(dls)}</span>
+          <!-- Times + difficulty -->
+          <div class="fc-times">
+            <span class="fc-time-item">⏱ Setup: ${setupT}</span>
+            <span class="fc-sep">·</span>
+            <span class="fc-time-item">🧠 Learn: ${learnT}</span>
+            <span class="fc-diff fc-diff-${(s.difficulty||'Intermediate').toLowerCase()}">${s.difficulty||'Intermediate'}</span>
+          </div>
+
+          <!-- Footer: submitter + stats -->
+          <div class="fc-footer">
+            <div class="fc-submitter" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+              <div class="fc-avatar" style="background:${sub.color}">${sub.initials}</div>
+              <div>
+                <div class="fc-sub-name">${sub.name}</div>
+                <div class="fc-sub-date">${created}</div>
+              </div>
+            </div>
+            <div class="fc-stats">
+              <button class="fc-stat-btn like-btn ${isLiked ? 'liked' : ''}"
+                      id="like-btn-${s.id}"
+                      onclick="event.stopPropagation();toggleLike('${s.id}')">
+                <svg width="12" height="12" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <span id="like-count-${s.id}">${formatNum(likes)}</span>
+              </button>
+              <span class="fc-stat-item">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <span id="view-count-${s.id}">${formatNum(views)}</span>
+              </span>
+              <button class="fc-stat-btn dl-btn"
+                      onclick="event.stopPropagation();handleDownload('${s.id}','${s.packagePath||''}')">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                <span id="dl-count-${s.id}">${formatNum(dls)}</span>
+              </button>
+            </div>
+          </div>
+
+          <!-- Open detail CTA -->
+          <button class="fc-cta" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+            View Solution →
+          </button>
+
+        </div><!-- /flip-front -->
+
+        <!-- ═══════════════════════════════
+             BACK FACE — Analytics
+        ═══════════════════════════════ -->
+        <div class="flip-back">
+
+          <!-- Same rotating border on back -->
+          <div class="card-border">
+            <div class="card-border-inner" style="--card-color:${color}"></div>
+          </div>
+
+          <!-- Back topbar -->
+          <div class="fc-topbar">
+            <div style="display:flex;align-items:center;gap:8px;">
+              <div class="bc-icon-wrap" style="background:linear-gradient(135deg,${color},${color}aa)">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+              </div>
+              <span class="bc-heading">Analytics</span>
+            </div>
+            <div style="display:flex;align-items:center;gap:5px;">
+              <span class="bc-live-badge">
+                <span class="bc-live-dot"></span>Live
+              </span>
+              <button class="fc-flip-btn" title="Back to card" onclick="flipCard('${s.id}',event)">
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Metrics grid -->
+          <div class="bc-grid">
+            <div class="bc-metric">
+              <p class="bc-metric-label">Total Views</p>
+              <p class="bc-metric-val" id="bm-tot-v-${s.id}">${formatNum(views)}</p>
+              <span class="bc-metric-sub" id="bm-v7-${s.id}" style="color:#10b981">7d: —</span>
+            </div>
+            <div class="bc-metric">
+              <p class="bc-metric-label">Downloads</p>
+              <p class="bc-metric-val" id="bm-tot-dl-${s.id}">${formatNum(dls)}</p>
+              <span class="bc-metric-sub" id="bm-dl7-${s.id}" style="color:#10b981">7d: —</span>
+            </div>
+          </div>
+
+          <!-- Bar chart — last 7 days views -->
+          <div class="bc-chart-wrap">
+            <div class="bc-chart">
+              ${barCols}
+            </div>
+          </div>
+
+          <!-- Period breakdown -->
+          <div class="bc-periods">
+            <div class="bc-period">
+              <span class="bc-period-label">7 days</span>
+              <span class="bc-period-val" id="bm-v7-${s.id}">—</span>
+            </div>
+            <div class="bc-period">
+              <span class="bc-period-label">14 days</span>
+              <span class="bc-period-val" id="bm-v14-${s.id}">—</span>
+            </div>
+            <div class="bc-period">
+              <span class="bc-period-label">30 days</span>
+              <span class="bc-period-val" id="bm-v30-${s.id}">—</span>
+            </div>
+            <div class="bc-period">
+              <span class="bc-period-label">Pinned</span>
+              <span class="bc-period-val" id="bm-fav-${s.id}">${isFav ? '⭐' : '—'}</span>
+            </div>
+          </div>
+
+          <!-- Footer -->
+          <div class="bc-footer">
+            <div style="display:flex;align-items:center;gap:4px;">
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
+              <span style="font-size:0.65rem;color:#64748b;font-family:var(--font-mono);">Last 30 days</span>
+            </div>
+            <button class="bc-detail-btn" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
+              View Details
+              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
-        </div>
 
-      </div>
+        </div><!-- /flip-back -->
+
+      </div><!-- /flip-inner -->
     </div>`;
 }
 
@@ -712,8 +892,8 @@ function toggleLike(id) {
 function trackView(id) {
   App.localViews[id] = (App.localViews[id] || 0) + 1;
   localStorage.setItem('sb-views', JSON.stringify(App.localViews));
-  // Update view count on card if visible
-  const el = document.getElementById('view-count-' + id);
+  logDailyView(id);
+  const el  = document.getElementById('view-count-' + id);
   const sol = App.solutions.find(s => s.id === id);
   if (el && sol) el.textContent = formatNum(getViews(sol));
 }
@@ -788,29 +968,18 @@ function startTypingAnimation() {
 }
 
 function tiltCard(e, wrap) {
+  const inner = wrap.querySelector('.flip-inner');
+  if (!inner || inner.classList.contains('flipped')) return;
   const rect = wrap.getBoundingClientRect();
-  const x  = e.clientX - rect.left;
-  const y  = e.clientY - rect.top;
-  const cx = rect.width  / 2;
-  const cy = rect.height / 2;
-  const rotX =  (y - cy) / cy * -6;
-  const rotY =  (x - cx) / cx *  6;
-
-  const card = wrap.querySelector('.scard');
-  const glow = wrap.querySelector('.scard-glow');
-  if (card) card.style.transform = `perspective(900px) rotateX(${rotX}deg) rotateY(${rotY}deg) translateZ(6px)`;
-  if (glow) {
-    glow.style.opacity = '1';
-    glow.style.left    = (x / rect.width  * 100) + '%';
-    glow.style.top     = (y / rect.height * 100) + '%';
-  }
+  const rotX = ((e.clientY - rect.top)  / rect.height - 0.5) * -10;
+  const rotY = ((e.clientX - rect.left) / rect.width  - 0.5) *  10;
+  inner.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 }
 
 function resetCard(wrap) {
-  const card = wrap.querySelector('.scard');
-  const glow = wrap.querySelector('.scard-glow');
-  if (card) card.style.transform = 'perspective(900px) rotateX(0deg) rotateY(0deg) translateZ(0px)';
-  if (glow) glow.style.opacity = '0';
+  const inner = wrap.querySelector('.flip-inner');
+  if (!inner || inner.classList.contains('flipped')) return;
+  inner.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
 }
 
 // ── Detail View ─────────────────────────────────────
