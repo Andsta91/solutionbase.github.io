@@ -528,38 +528,95 @@ function flipCard(id, e) {
   if (!inner) return;
   const isFlipped = inner.classList.toggle('flipped');
 
-  // Refresh back-side metrics each time we flip to back
-  if (isFlipped) refreshBackMetrics(id);
+  if (isFlipped) {
+    // Reset to 7d tab and refresh
+    const tabsEl = document.getElementById('bc-tabs-' + id);
+    if (tabsEl) {
+      tabsEl.querySelectorAll('.bc-tab').forEach((t, i) => t.classList.toggle('active', i === 0));
+    }
+    refreshBackMetrics(id, 7);
+  }
 }
 
-function refreshBackMetrics(id) {
+function refreshBackMetrics(id, days) {
+  const period = days || 7;
   const sol = App.solutions.find(s => s.id === id);
   if (!sol) return;
 
-  const v7  = getDayMetrics(id, 7)  + Math.round((sol.views  || 0) * 0.05);
-  const v14 = getDayMetrics(id, 14) + Math.round((sol.views  || 0) * 0.09);
-  const v30 = getDayMetrics(id, 30) + Math.round((sol.views  || 0) * 0.18);
-  const dl7 = getDayMetrics(id, 7)  + Math.round((getDownloads(sol)) * 0.1);
-  const dl30= getDayMetrics(id, 30) + Math.round((getDownloads(sol)) * 0.22);
-  const fav = App.favourites.includes(id) ? 1 : 0;
+  // Period-scoped views and downloads
+  const vPeriod  = getDayMetrics(id, period) + Math.round((sol.views || 0) * (period / 200));
+  const dlPeriod = Math.round(getDownloads(sol) * (period / 120));
 
+  // Update top metric cards
   const setEl = (elId, val) => { const el = document.getElementById(elId); if (el) el.textContent = val; };
-  setEl('bm-v7-'  + id, formatNum(v7));
-  setEl('bm-v14-' + id, formatNum(v14));
-  setEl('bm-v30-' + id, formatNum(v30));
-  setEl('bm-dl7-' + id, formatNum(dl7));
-  setEl('bm-dl30-'+ id, formatNum(dl30));
-  setEl('bm-fav-' + id, fav ? '⭐ Pinned' : '—');
+  setEl('bm-views-'    + id, formatNum(vPeriod));
+  setEl('bm-views-lbl-'+ id, period + 'd period');
+  setEl('bm-dls-'      + id, formatNum(dlPeriod));
+  setEl('bm-dls-lbl-'  + id, period + 'd period');
+
+  // Update totals
   setEl('bm-tot-v-'  + id, formatNum(getViews(sol)));
   setEl('bm-tot-dl-' + id, formatNum(getDownloads(sol)));
+  setEl('bm-fav-'    + id, App.favourites.includes(id) ? '⭐ Yes' : '—');
 
-  // Animate bar chart
-  const bars = getBarData(id);
-  const max  = Math.max(...bars.map(b => b.count), 1);
-  bars.forEach((b, i) => {
-    const bar = document.getElementById('bar-' + id + '-' + i);
-    if (bar) bar.style.height = Math.max(8, Math.round((b.count / max) * 100)) + '%';
-  });
+  // Update chart label
+  const lblEl = document.getElementById('bc-chart-lbl-' + id);
+  if (lblEl) lblEl.textContent = 'Last ' + period + ' days — daily views';
+
+  // Rebuild bar chart for selected period
+  const chartEl = document.getElementById('bc-chart-' + id);
+  if (chartEl) {
+    // Build N bars for the period (max 14 bars shown, grouped for 30d)
+    const barsToShow = period <= 14 ? period : 15;
+    const groupSize  = period <= 14 ? 1 : Math.ceil(period / 15);
+    const key = 'sb-daily-' + id;
+    const data = JSON.parse(localStorage.getItem(key) || '{}');
+    const bars = [];
+
+    for (let i = barsToShow - 1; i >= 0; i--) {
+      let count = 0;
+      let label = '';
+      for (let g = 0; g < groupSize; g++) {
+        const d = new Date();
+        d.setDate(d.getDate() - (i * groupSize + g));
+        const ds = d.toISOString().split('T')[0];
+        count += data[ds] || 0;
+        if (g === 0) {
+          label = groupSize === 1
+            ? d.toLocaleDateString('en-GB', { weekday: 'short' })
+            : d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' });
+        }
+      }
+      bars.push({ label, count });
+    }
+
+    const maxB = Math.max(...bars.map(b => b.count), 1);
+
+    chartEl.innerHTML = bars.map((b, i) => {
+      const pct = Math.max(6, Math.round((b.count / maxB) * 100));
+      return `
+        <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;">
+          <div style="width:100%;background:rgba(129,140,248,0.15);border-radius:3px;height:70px;display:flex;align-items:flex-end;">
+            <div style="width:100%;height:${pct}%;background:linear-gradient(180deg,#818cf8,#6366f1);border-radius:3px;
+                        transition:height 0.5s cubic-bezier(0.34,1.56,0.64,1) ${i*30}ms;">
+            </div>
+          </div>
+          <span style="font-size:0.48rem;color:#475569;font-family:var(--font-mono);white-space:nowrap;">${b.label}</span>
+        </div>`;
+    }).join('');
+  }
+}
+
+// Called by period tab buttons on the back face
+function switchPeriod(id, days, btn) {
+  // Update active tab
+  const tabsEl = document.getElementById('bc-tabs-' + id);
+  if (tabsEl) {
+    tabsEl.querySelectorAll('.bc-tab').forEach(t => t.classList.remove('active'));
+    if (btn) btn.classList.add('active');
+  }
+  // Refresh metrics for the chosen period
+  refreshBackMetrics(id, days);
 }
 
 function cardHTML(s, delay = 0) {
@@ -732,52 +789,58 @@ function cardHTML(s, delay = 0) {
             </div>
           </div>
 
-          <!-- Metrics grid -->
+          <!-- Period filter buttons -->
+          <div class="bc-period-tabs" id="bc-tabs-${s.id}">
+            <button class="bc-tab active" onclick="switchPeriod('${s.id}',7,this)">7d</button>
+            <button class="bc-tab" onclick="switchPeriod('${s.id}',14,this)">14d</button>
+            <button class="bc-tab" onclick="switchPeriod('${s.id}',30,this)">30d</button>
+          </div>
+
+          <!-- Metrics grid — updates when period changes -->
           <div class="bc-grid">
             <div class="bc-metric">
-              <p class="bc-metric-label">Total Views</p>
-              <p class="bc-metric-val" id="bm-tot-v-${s.id}">${formatNum(views)}</p>
-              <span class="bc-metric-sub" id="bm-v7-${s.id}" style="color:#10b981">7d: —</span>
+              <p class="bc-metric-label">Views</p>
+              <p class="bc-metric-val" id="bm-views-${s.id}">${formatNum(views)}</p>
+              <span class="bc-metric-sub" id="bm-views-lbl-${s.id}">all time</span>
             </div>
             <div class="bc-metric">
               <p class="bc-metric-label">Downloads</p>
-              <p class="bc-metric-val" id="bm-tot-dl-${s.id}">${formatNum(dls)}</p>
-              <span class="bc-metric-sub" id="bm-dl7-${s.id}" style="color:#10b981">7d: —</span>
+              <p class="bc-metric-val" id="bm-dls-${s.id}">${formatNum(dls)}</p>
+              <span class="bc-metric-sub" id="bm-dls-lbl-${s.id}">all time</span>
             </div>
           </div>
 
-          <!-- Bar chart — last 7 days views -->
+          <!-- Bar chart — period label shown above -->
           <div class="bc-chart-wrap">
-            <div class="bc-chart">
+            <div style="font-size:0.6rem;color:#475569;font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;" id="bc-chart-lbl-${s.id}">Last 7 days — daily views</div>
+            <div class="bc-chart" id="bc-chart-${s.id}">
               ${barCols}
             </div>
           </div>
 
-          <!-- Period breakdown -->
-          <div class="bc-periods">
-            <div class="bc-period">
-              <span class="bc-period-label">7 days</span>
-              <span class="bc-period-val" id="bm-v7-${s.id}">—</span>
+          <!-- Summary stats row -->
+          <div class="bc-summary-row">
+            <div class="bc-summary-item">
+              <span class="bc-summary-label">Total Views</span>
+              <span class="bc-summary-val" id="bm-tot-v-${s.id}">${formatNum(views)}</span>
             </div>
-            <div class="bc-period">
-              <span class="bc-period-label">14 days</span>
-              <span class="bc-period-val" id="bm-v14-${s.id}">—</span>
+            <div class="bc-summary-divider"></div>
+            <div class="bc-summary-item">
+              <span class="bc-summary-label">Total Downloads</span>
+              <span class="bc-summary-val" id="bm-tot-dl-${s.id}">${formatNum(dls)}</span>
             </div>
-            <div class="bc-period">
-              <span class="bc-period-label">30 days</span>
-              <span class="bc-period-val" id="bm-v30-${s.id}">—</span>
-            </div>
-            <div class="bc-period">
-              <span class="bc-period-label">Pinned</span>
-              <span class="bc-period-val" id="bm-fav-${s.id}">${isFav ? '⭐' : '—'}</span>
+            <div class="bc-summary-divider"></div>
+            <div class="bc-summary-item">
+              <span class="bc-summary-label">Pinned</span>
+              <span class="bc-summary-val" id="bm-fav-${s.id}">${isFav ? '⭐ Yes' : '—'}</span>
             </div>
           </div>
 
           <!-- Footer -->
-          <div class="bc-footer">
+          <div class="bc-footer" style="margin-top:auto;">
             <div style="display:flex;align-items:center;gap:4px;">
               <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span style="font-size:0.65rem;color:#64748b;font-family:var(--font-mono);">Last 30 days</span>
+              <span style="font-size:0.62rem;color:#64748b;font-family:var(--font-mono);">Local analytics</span>
             </div>
             <button class="bc-detail-btn" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
               View Details
