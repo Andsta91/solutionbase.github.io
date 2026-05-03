@@ -1773,6 +1773,9 @@ kbd {
 .flip-inner {
   position: relative;
   width: 100%;
+  /* Explicit height — both faces are position:absolute so inner collapses without this */
+  min-height: 540px;
+  height: 540px;
   transform-style: preserve-3d;
   transition: transform 0.7s cubic-bezier(0.4,0,0.2,1);
   will-change: transform;
@@ -1785,12 +1788,15 @@ kbd {
 /* ── Both faces share these base styles ── */
 .flip-front,
 .flip-back {
-  position: relative;
+  position: absolute;
+  top: 0; left: 0;
   width: 100%;
+  height: 100%;
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
   border-radius: 16px;
   overflow: hidden;
+  box-sizing: border-box;
 
   /* Dark gradient background from Uiverse front card */
   background-color: hsl(240, 15%, 9%);
@@ -1811,14 +1817,22 @@ kbd {
   display: flex;
   flex-direction: column;
   gap: 10px;
+
+  /* CRITICAL: disable pointer events on hidden face */
+  pointer-events: none;
 }
+
+/* Only the VISIBLE face gets pointer events */
+.flip-inner:not(.flipped) .flip-front { pointer-events: all; }
+.flip-inner.flipped        .flip-back  { pointer-events: all; }
 
 /* Back face is rotated 180deg */
 .flip-back {
-  position: absolute;
-  top: 0; left: 0;
   transform: rotateY(180deg);
 }
+
+/* Remove ghost — no longer needed */
+.flip-height-ghost { display: none; }
 
 /* ── Animated rotating border (from Uiverse front CSS) ── */
 .card-border {
@@ -2272,39 +2286,85 @@ kbd {
   width: 100%;
 }
 
-/* Period breakdown */
-.bc-periods {
-  display: grid;
-  grid-template-columns: 1fr 1fr 1fr 1fr;
-  gap: 6px;
-}
-
-.bc-period {
+/* Period filter tabs */
+.bc-period-tabs {
+  display: flex;
+  gap: 5px;
   background: rgba(15,23,42,0.5);
   border: 1px solid rgba(255,255,255,0.06);
-  border-radius: 8px;
-  padding: 7px 8px;
-  text-align: center;
+  border-radius: 10px;
+  padding: 5px;
 }
 
-.bc-period-label {
-  display: block;
-  font-size: 0.55rem;
+.bc-tab {
+  flex: 1;
+  padding: 5px 0;
+  border: none;
+  border-radius: 7px;
+  background: transparent;
+  font-size: 0.68rem;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  letter-spacing: 0.04em;
+}
+
+.bc-tab:hover { color: #818cf8; }
+
+.bc-tab.active {
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  color: white;
+  box-shadow: 0 2px 8px rgba(99,102,241,0.35);
+}
+
+/* Summary row */
+.bc-summary-row {
+  display: flex;
+  align-items: center;
+  background: rgba(15,23,42,0.5);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.bc-summary-item {
+  flex: 1;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.bc-summary-label {
+  font-size: 0.57rem;
   font-weight: 600;
   color: #475569;
   font-family: var(--font-mono);
   text-transform: uppercase;
   letter-spacing: 0.05em;
-  margin-bottom: 3px;
 }
 
-.bc-period-val {
-  display: block;
-  font-size: 0.75rem;
+.bc-summary-val {
+  font-size: 0.82rem;
   font-weight: 700;
   color: #818cf8;
   font-family: var(--font-mono);
 }
+
+.bc-summary-divider {
+  width: 1px;
+  height: 32px;
+  background: rgba(255,255,255,0.07);
+  flex-shrink: 0;
+  margin: 0 8px;
+}
+
+/* Hide old period grid */
+.bc-periods, .bc-period { display: none; }
+
+
 
 /* Back footer */
 .bc-footer {
