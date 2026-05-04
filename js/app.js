@@ -620,98 +620,89 @@ function switchPeriod(id, days, btn) {
 }
 
 function cardHTML(s, delay = 0) {
+  // Defensive defaults for submissions missing new fields
   const color   = s.color || '#0078d4';
   const isFav   = App.favourites.includes(s.id);
   const isLiked = !!App.likes[s.id];
   const sc      = statusConfig(s.status || 'Production Ready');
   const uc      = useCaseConfig(s.useCase || 'General');
   const sub     = s.submitter || {
-    name: s.author || 'SolutionBase',
+    name:     s.author || 'SolutionBase',
     initials: (s.author || 'SB').split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase(),
-    color: color
+    color:    color
   };
-  const likes  = getLikes(s);
-  const views  = getViews(s);
-  const dls    = getDownloads(s);
+  const likes   = getLikes(s);
+  const views   = getViews(s);
+  const dls     = getDownloads(s);
   const created = s.lastUpdated
     ? new Date(s.lastUpdated).toLocaleDateString('en-GB', { day:'numeric', month:'short', year:'numeric' })
     : '';
-  const setupT = s.setupTime || deployTime(s);
-  const learnT = s.learnTime || '—';
+  const setupT  = s.setupTime || deployTime(s);
+  const learnT  = s.learnTime || '—';
+  const titleSafe = (s.title || '').replace(/'/g, "\\'");
 
-  // Bar chart placeholders for back side
+  // Initial bar chart (7d) — rendered as inline HTML for the back face
   const bars = getBarData(s.id);
   const maxB = Math.max(...bars.map(b => b.count), 1);
-  const barCols = bars.map((b, i) => {
-    const pct = Math.max(8, Math.round((b.count / maxB) * 100));
-    return `
-      <div style="display:flex;flex-direction:column;align-items:center;gap:3px;flex:1;">
-        <div style="width:100%;background:rgba(129,140,248,0.2);border-radius:3px;height:70px;display:flex;align-items:flex-end;">
-          <div id="bar-${s.id}-${i}"
-               style="width:100%;height:${pct}%;background:linear-gradient(180deg,#818cf8,#6366f1);border-radius:3px;transition:height 0.6s cubic-bezier(0.34,1.56,0.64,1) ${i*60}ms;">
-          </div>
-        </div>
-        <span style="font-size:0.52rem;color:#64748b;font-family:var(--font-mono);">${b.label}</span>
-      </div>`;
+  const barHTML = bars.map(b => {
+    const pct = Math.max(6, Math.round((b.count / maxB) * 100));
+    return `<div style="display:flex;flex-direction:column;align-items:center;gap:2px;flex:1;">
+      <div style="width:100%;background:rgba(99,102,241,0.15);border-radius:3px 3px 0 0;height:100%;display:flex;align-items:flex-end;">
+        <div style="width:100%;height:${pct}%;background:linear-gradient(180deg,#818cf8,#6366f1);border-radius:3px 3px 0 0;transition:height 0.5s ease;"></div>
+      </div>
+      <span style="font-size:0.48rem;color:rgba(255,255,255,0.25);font-family:var(--font-mono);white-space:nowrap;">${b.label}</span>
+    </div>`;
   }).join('');
 
-  // Escape title for safe use in JS strings inside HTML
-  const titleSafe = s.title.replace(/'/g, "\\'").replace(/"/g, '&quot;');
-
   return `
-    <div class="flip-wrap" id="card-${s.id}" style="animation-delay:${delay}ms">
+    <div class="flip-wrap" id="card-${s.id}" style="animation-delay:${delay}ms"
+         onmousemove="tiltCard(event,this)" onmouseleave="resetCard(this)">
       <div class="flip-inner" id="flip-inner-${s.id}">
 
-        <!-- ═══════════════════════════════
-             FRONT FACE
-        ═══════════════════════════════ -->
+        <!-- ══════════════ FRONT FACE ══════════════ -->
         <div class="flip-front">
+          <!-- Animated border ring -->
+          <div class="flip-border" style="--fc:${color}"></div>
 
-          <!-- Rotating animated border -->
-          <div class="card-border">
-            <div class="card-border-inner" style="--card-color:${color}"></div>
-          </div>
-
-          <!-- Status + flip trigger -->
+          <!-- Top bar: status + controls -->
           <div class="fc-topbar">
             <span class="fc-status-pill" style="--sc:${sc.dot}">
               <span class="fc-dot"></span>${sc.label}
             </span>
-            <div style="display:flex;gap:5px;align-items:center;">
+            <div style="display:flex;gap:4px;align-items:center;">
               <button class="fc-icon-btn pin-btn ${isFav ? 'active' : ''}"
-                      id="pin-${s.id}"
-                      title="${isFav ? 'Unpin' : 'Pin'}"
+                      id="pin-${s.id}" title="${isFav ? 'Unpin' : 'Pin to favourites'}"
                       onclick="event.stopPropagation();toggleFavourite('${s.id}')">📌</button>
-              <button class="fc-icon-btn"
-                      title="Share"
+              <button class="fc-icon-btn" title="Share"
                       onclick="event.stopPropagation();openShare('${s.id}','${titleSafe}')">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
               </button>
-              <button class="fc-flip-btn" title="View analytics" onclick="flipCard('${s.id}',event)">
+              <button class="fc-flip-btn" title="View analytics"
+                      onclick="flipCard('${s.id}',event)">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
               </button>
             </div>
           </div>
 
-          <!-- Icon + title area -->
+          <!-- Hero: icon + title -->
           <div class="fc-hero" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-            <div class="fc-icon-wrap" style="--ic:${color}">${s.icon}</div>
-            <div>
-              <div class="fc-uc-badge">${uc.emoji} ${uc.label}</div>
+            <div class="fc-icon-wrap">${s.icon}</div>
+            <div style="min-width:0;">
+              <div class="fc-uc-badge">${uc.emoji} ${uc.label} · ${s.tool}</div>
               <h3 class="fc-title">${s.title}</h3>
-              <p class="fc-subtitle">${(s.description||'').slice(0,72)}…</p>
+              <p class="fc-subtitle">${(s.description || '').slice(0, 65)}…</p>
             </div>
           </div>
 
           <hr class="fc-line" />
 
-          <!-- Feature list (tags as features) -->
+          <!-- Tag checklist -->
           <ul class="fc-list" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
-            ${(s.tags||[]).slice(0,4).map(t => `
+            ${(s.tags || []).slice(0, 4).map(t => `
               <li class="fc-list-item">
                 <span class="fc-check">
                   <svg viewBox="0 0 16 16" fill="currentColor" class="fc-check-svg">
-                    <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z" clip-rule="evenodd"/>
+                    <path fill-rule="evenodd" d="M12.416 3.376a.75.75 0 0 1 .208 1.04l-5 7.5a.75.75 0 0 1-1.154.114l-3-3a.75.75 0 0 1 1.06-1.06l2.353 2.353 4.493-6.74a.75.75 0 0 1 1.04-.207Z"/>
                   </svg>
                 </span>
                 <span class="fc-list-text">${t}</span>
@@ -720,17 +711,17 @@ function cardHTML(s, delay = 0) {
 
           <!-- Times + difficulty -->
           <div class="fc-times">
-            <span class="fc-time-item">⏱ Setup: ${setupT}</span>
+            <span class="fc-time-item">⏱ ${setupT}</span>
             <span class="fc-sep">·</span>
-            <span class="fc-time-item">🧠 Learn: ${learnT}</span>
-            <span class="fc-diff fc-diff-${(s.difficulty||'Intermediate').toLowerCase()}">${s.difficulty||'Intermediate'}</span>
+            <span class="fc-time-item">🧠 ${learnT}</span>
+            <span class="fc-diff fc-diff-${(s.difficulty || 'Intermediate').toLowerCase()}">${s.difficulty || 'Intermediate'}</span>
           </div>
 
           <!-- Footer: submitter + stats -->
           <div class="fc-footer">
             <div class="fc-submitter" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
               <div class="fc-avatar" style="background:${sub.color}">${sub.initials}</div>
-              <div>
+              <div style="min-width:0;overflow:hidden;">
                 <div class="fc-sub-name">${sub.name}</div>
                 <div class="fc-sub-date">${created}</div>
               </div>
@@ -739,64 +730,56 @@ function cardHTML(s, delay = 0) {
               <button class="fc-stat-btn like-btn ${isLiked ? 'liked' : ''}"
                       id="like-btn-${s.id}"
                       onclick="event.stopPropagation();toggleLike('${s.id}')">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="${isLiked ? 'currentColor' : 'none'}" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                 <span id="like-count-${s.id}">${formatNum(likes)}</span>
               </button>
               <span class="fc-stat-item">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
                 <span id="view-count-${s.id}">${formatNum(views)}</span>
               </span>
               <button class="fc-stat-btn dl-btn"
-                      onclick="event.stopPropagation();handleDownload('${s.id}','${s.packagePath||''}')">
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                      onclick="event.stopPropagation();handleDownload('${s.id}','${s.packagePath || ''}')">
+                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
                 <span id="dl-count-${s.id}">${formatNum(dls)}</span>
               </button>
             </div>
           </div>
 
-          <!-- Open detail CTA -->
+          <!-- CTA -->
           <button class="fc-cta" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
             View Solution →
           </button>
-
         </div><!-- /flip-front -->
 
-        <!-- ═══════════════════════════════
-             BACK FACE — Analytics
-        ═══════════════════════════════ -->
+        <!-- ══════════════ BACK FACE ══════════════ -->
         <div class="flip-back">
+          <!-- Animated border ring -->
+          <div class="flip-border" style="--fc:${color}"></div>
 
-          <!-- Same rotating border on back -->
-          <div class="card-border">
-            <div class="card-border-inner" style="--card-color:${color}"></div>
-          </div>
-
-          <!-- Back topbar -->
+          <!-- Top bar -->
           <div class="fc-topbar">
-            <div style="display:flex;align-items:center;gap:8px;">
-              <div class="bc-icon-wrap" style="background:linear-gradient(135deg,${color},${color}aa)">
-                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+            <div style="display:flex;align-items:center;gap:7px;">
+              <div class="bc-icon-wrap" style="background:linear-gradient(135deg,${color},${color}99)">
+                <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
               </div>
               <span class="bc-heading">Analytics</span>
             </div>
             <div style="display:flex;align-items:center;gap:5px;">
-              <span class="bc-live-badge">
-                <span class="bc-live-dot"></span>Live
-              </span>
+              <span class="bc-live-badge"><span class="bc-live-dot"></span>Live</span>
               <button class="fc-flip-btn" title="Back to card" onclick="flipCard('${s.id}',event)">
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="23 4 23 10 17 10"/><polyline points="1 20 1 14 7 14"/><path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/></svg>
               </button>
             </div>
           </div>
 
-          <!-- Period filter buttons -->
+          <!-- Period tabs -->
           <div class="bc-period-tabs" id="bc-tabs-${s.id}">
-            <button class="bc-tab active" onclick="switchPeriod('${s.id}',7,this)">7d</button>
-            <button class="bc-tab" onclick="switchPeriod('${s.id}',14,this)">14d</button>
-            <button class="bc-tab" onclick="switchPeriod('${s.id}',30,this)">30d</button>
+            <button class="bc-tab active" onclick="switchPeriod('${s.id}',7,this)">7 days</button>
+            <button class="bc-tab" onclick="switchPeriod('${s.id}',14,this)">14 days</button>
+            <button class="bc-tab" onclick="switchPeriod('${s.id}',30,this)">30 days</button>
           </div>
 
-          <!-- Metrics grid — updates when period changes -->
+          <!-- Metrics -->
           <div class="bc-grid">
             <div class="bc-metric">
               <p class="bc-metric-label">Views</p>
@@ -810,15 +793,13 @@ function cardHTML(s, delay = 0) {
             </div>
           </div>
 
-          <!-- Bar chart — period label shown above -->
+          <!-- Bar chart -->
           <div class="bc-chart-wrap">
-            <div style="font-size:0.6rem;color:#475569;font-family:var(--font-mono);margin-bottom:6px;text-transform:uppercase;letter-spacing:0.06em;" id="bc-chart-lbl-${s.id}">Last 7 days — daily views</div>
-            <div class="bc-chart" id="bc-chart-${s.id}">
-              ${barCols}
-            </div>
+            <div class="bc-chart-label" id="bc-chart-lbl-${s.id}">Last 7 days — daily views</div>
+            <div class="bc-chart" id="bc-chart-${s.id}" style="height:70px;">${barHTML}</div>
           </div>
 
-          <!-- Summary stats row -->
+          <!-- Summary totals -->
           <div class="bc-summary-row">
             <div class="bc-summary-item">
               <span class="bc-summary-label">Total Views</span>
@@ -826,28 +807,24 @@ function cardHTML(s, delay = 0) {
             </div>
             <div class="bc-summary-divider"></div>
             <div class="bc-summary-item">
-              <span class="bc-summary-label">Total Downloads</span>
+              <span class="bc-summary-label">Downloads</span>
               <span class="bc-summary-val" id="bm-tot-dl-${s.id}">${formatNum(dls)}</span>
             </div>
             <div class="bc-summary-divider"></div>
             <div class="bc-summary-item">
               <span class="bc-summary-label">Pinned</span>
-              <span class="bc-summary-val" id="bm-fav-${s.id}">${isFav ? '⭐ Yes' : '—'}</span>
+              <span class="bc-summary-val" id="bm-fav-${s.id}">${isFav ? '⭐' : '—'}</span>
             </div>
           </div>
 
           <!-- Footer -->
           <div class="bc-footer" style="margin-top:auto;">
-            <div style="display:flex;align-items:center;gap:4px;">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="#64748b" stroke-width="2"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg>
-              <span style="font-size:0.62rem;color:#64748b;font-family:var(--font-mono);">Local analytics</span>
-            </div>
+            <span style="font-size:0.6rem;color:rgba(255,255,255,0.25);font-family:var(--font-mono);">Local analytics</span>
             <button class="bc-detail-btn" onclick="openDetail(App.solutions.find(x=>x.id==='${s.id}'))">
               View Details
-              <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
+              <svg width="9" height="9" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M9 5l7 7-7 7"/></svg>
             </button>
           </div>
-
         </div><!-- /flip-back -->
 
       </div><!-- /flip-inner -->
