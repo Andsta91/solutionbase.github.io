@@ -526,7 +526,7 @@ function flipCard(id, e) {
   if (!wrap) return;
   const inner = wrap.querySelector('.flip-inner');
   if (!inner) return;
-  const isFlipped = inner.classList.toggle('flipped');
+  const isFlipped = inner.classList.toggle('is-flipped');
 
   if (isFlipped) {
     // Reset to 7d tab and refresh
@@ -1009,17 +1009,17 @@ function startTypingAnimation() {
 
 function tiltCard(e, wrap) {
   const inner = wrap.querySelector('.flip-inner');
-  if (!inner || inner.classList.contains('flipped')) return;
+  if (!inner || inner.classList.contains('is-flipped')) return;
   const rect = wrap.getBoundingClientRect();
   const rotX = ((e.clientY - rect.top)  / rect.height - 0.5) * -10;
   const rotY = ((e.clientX - rect.left) / rect.width  - 0.5) *  10;
-  inner.style.transform = `perspective(1000px) rotateX(${rotX}deg) rotateY(${rotY}deg)`;
+  inner.style.transform = `rotateX(${rotX}deg) rotateY(${rotY}deg)`;
 }
 
 function resetCard(wrap) {
   const inner = wrap.querySelector('.flip-inner');
-  if (!inner || inner.classList.contains('flipped')) return;
-  inner.style.transform = 'perspective(1000px) rotateX(0deg) rotateY(0deg)';
+  if (!inner || inner.classList.contains('is-flipped')) return;
+  inner.style.transform = '';
 }
 
 // ── Detail View ─────────────────────────────────────
