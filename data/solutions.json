@@ -752,5 +752,40 @@
       "oll"
     ],
     "issueRef": 15
+  },
+  {
+    "id": "new-test",
+    "title": "new test",
+    "tool": "Power Apps",
+    "tags": [
+      "HTTP"
+    ],
+    "difficulty": "Beginner",
+    "status": "Production Ready",
+    "version": "1.0.1",
+    "lastUpdated": "2026-05-06",
+    "stars": 0,
+    "downloads": 0,
+    "featured": false,
+    "icon": ":)",
+    "color": "#008762",
+    "description": "test03",
+    "readmePath": "solutions/new-test/README.md",
+    "packagePath": "https://andsta91.github.io/solutionbase.github.io/#",
+    "githubRepo": "https://andsta91.github.io/solutionbase.github.io/#",
+    "features": [
+      "test"
+    ],
+    "components": [
+      {
+        "type": "Unknown",
+        "name": "test",
+        "description": ""
+      }
+    ],
+    "prerequisites": [
+      "test"
+    ],
+    "issueRef": 17
   }
 ]
