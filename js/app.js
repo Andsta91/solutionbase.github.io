@@ -526,6 +526,9 @@ function flipCard(id, e) {
   if (!wrap) return;
   const inner = wrap.querySelector('.flip-inner');
   if (!inner) return;
+  // Clear any inline tilt transform set by tiltCard() so the
+  // CSS-class-based rotateY(180deg) can take full effect.
+  inner.style.transform = '';
   const isFlipped = inner.classList.toggle('is-flipped');
 
   if (isFlipped) {
