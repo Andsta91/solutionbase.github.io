@@ -1748,6 +1748,7 @@ kbd {
 .solutions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(270px, 1fr));
+  grid-auto-rows: 460px; /* every row is exactly the card height — no stretching */
   gap: 20px;
   padding: 24px 28px;
 }
@@ -1758,6 +1759,7 @@ kbd {
   height: 460px;
   perspective: 800px;
   animation: fcUp 0.4s ease both;
+  overflow: hidden; /* prevent content overflow from distorting card size */
 }
 @keyframes fcUp {
   from { opacity:0; transform:translateY(12px); }
@@ -1774,6 +1776,14 @@ kbd {
 
 .flip-inner.is-flipped {
   transform: rotateY(180deg);
+}
+
+/* Prevent the hidden face from intercepting pointer events */
+.flip-inner:not(.is-flipped) .flip-back {
+  pointer-events: none;
+}
+.flip-inner.is-flipped .flip-front {
+  pointer-events: none;
 }
 
 .flip-front,
@@ -2187,7 +2197,7 @@ kbd {
 }
 
 @media (max-width:640px) {
-  .solutions-grid { grid-template-columns:1fr; padding:16px; }
+  .solutions-grid { grid-template-columns:1fr; grid-auto-rows: 480px; padding:16px; }
   .flip-wrap { height:480px; }
 }
 
@@ -2285,6 +2295,7 @@ body.dark .tracker-row.checked {
 .solutions-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  grid-auto-rows: 460px; /* enforce uniform card height regardless of content */
   gap: 16px;
   padding: 20px 28px;
   background: transparent;
