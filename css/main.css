@@ -2741,3 +2741,68 @@ body.dark .card-usecase-badge {
   0%, 100% { opacity: 1; }
   50%       { opacity: 0; }
 }
+
+/* ================================
+   FINAL CARD VISUAL OVERRIDE
+   (matches new-card reference)
+================================ */
+
+.flip-front,
+.flip-back {
+  background-color: hsl(240, 15%, 9%) !important;
+  background-image:
+    radial-gradient(at 88% 40%, hsl(240,15%,9%) 0%, transparent 85%),
+    radial-gradient(at 49% 30%, hsl(240,15%,9%) 0%, transparent 85%),
+    radial-gradient(at 14% 26%, hsl(240,15%,9%) 0%, transparent 85%),
+    radial-gradient(at   0% 64%, hsl(266,92%,58%) 0%, transparent 85%),
+    radial-gradient(at 41% 94%, hsl(284,100%,84%) 0%, transparent 85%),
+    radial-gradient(at 100% 99%, hsl(306,100%,57%) 0%, transparent 85%) !important;
+
+  box-shadow:
+    inset 0 -16px 24px rgba(255,255,255,0.25),
+    0 24px 60px rgba(0,0,0,0.6) !important;
+
+  border: 1px solid rgba(255,255,255,0.12) !important;
+}
+
+/* Animated ring — THIS was missing visually */
+.flip-front .flip-border,
+.flip-back .flip-border {
+  position: absolute;
+  inset: -1px;
+  border-radius: 14px;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.flip-front .flip-border::before,
+.flip-back .flip-border::before {
+  content: "";
+  position: absolute;
+  inset: -100%;
+  background: linear-gradient(
+    0deg,
+    transparent 0%,
+    var(--fc, #a855f7) 45%,
+    var(--fc, #a855f7) 55%,
+    transparent 100%
+  );
+  animation: cardSpin 8s linear infinite;
+}
+
+@keyframes cardSpin {
+  to { transform: rotate(360deg); }
+}
+
+/* Content stays above glow */
+.flip-front > *:not(.flip-border),
+.flip-back  > *:not(.flip-border) {
+  position: relative;
+  z-index: 1;
+}
+
+/* CTA */
+.fc-cta {
+  background-image: linear-gradient(180deg, #a855f7, #6366f1) !important;
+  box-shadow: inset 0 -2px 24px rgba(255,255,255,0.25);
+}
