@@ -2742,6 +2742,14 @@ body.dark .card-usecase-badge {
   50%       { opacity: 0; }
 }
 
+
+/* 
+  DO NOT MODIFY:
+  This block intentionally overrides per-card coloring.
+  It reproduces the approved UIverse dark-glass card design.
+*/
+
+
 /* ==================================================
    UIverse Card Background – Exact Port (No Redesign)
 ================================================== */
