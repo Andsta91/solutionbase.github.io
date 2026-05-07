@@ -822,5 +822,40 @@
       "test"
     ],
     "issueRef": 19
+  },
+  {
+    "id": "333",
+    "title": "333",
+    "tool": "Power Apps",
+    "tags": [
+      "ERP"
+    ],
+    "difficulty": "Beginner",
+    "status": "Production Ready",
+    "version": "1.0.5",
+    "lastUpdated": "2026-05-07",
+    "stars": 0,
+    "downloads": 0,
+    "featured": false,
+    "icon": ": )",
+    "color": "#908978",
+    "description": "ttt",
+    "readmePath": "solutions/333/README.md",
+    "packagePath": "https://sap.sharepoint.com/teams/proba123/SitePages/Our-Team.aspx",
+    "githubRepo": "https://sap.sharepoint.com/teams/proba123/SitePages/Our-Team.aspx",
+    "features": [
+      "ttt"
+    ],
+    "components": [
+      {
+        "type": "Unknown",
+        "name": "ttt",
+        "description": ""
+      }
+    ],
+    "prerequisites": [
+      "ttt"
+    ],
+    "issueRef": 21
   }
 ]
