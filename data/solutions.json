@@ -857,5 +857,40 @@
       "ttt"
     ],
     "issueRef": 21
+  },
+  {
+    "id": "hello-solution-approval",
+    "title": "hello solution approval",
+    "tool": "Power Apps",
+    "tags": [
+      "sharepoint"
+    ],
+    "difficulty": "Beginner",
+    "status": "Production Ready",
+    "version": "1.0.1",
+    "lastUpdated": "2026-05-07",
+    "stars": 0,
+    "downloads": 0,
+    "featured": false,
+    "icon": "🥷",
+    "color": "#0034d2",
+    "description": "hello test world",
+    "readmePath": "solutions/hello-solution-approval/README.md",
+    "packagePath": "https://github.com/Andsta91/solutionbase.github.io/",
+    "githubRepo": "https://github.com/Andsta91/solutionbase.github.io/",
+    "features": [
+      "hello test world"
+    ],
+    "components": [
+      {
+        "type": "Unknown",
+        "name": "hello test world",
+        "description": ""
+      }
+    ],
+    "prerequisites": [
+      "hello test world"
+    ],
+    "issueRef": 23
   }
 ]
