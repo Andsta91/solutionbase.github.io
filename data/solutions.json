@@ -787,5 +787,40 @@
       "test"
     ],
     "issueRef": 17
+  },
+  {
+    "id": "test-123",
+    "title": "test 123",
+    "tool": "Power Apps",
+    "tags": [
+      "SPO"
+    ],
+    "difficulty": "Beginner",
+    "status": "Production Ready",
+    "version": "1.0.3",
+    "lastUpdated": "2026-05-07",
+    "stars": 0,
+    "downloads": 0,
+    "featured": false,
+    "icon": ": )",
+    "color": "#29323",
+    "description": "test",
+    "readmePath": "solutions/test-123/README.md",
+    "packagePath": "https://andsta91.github.io/solutionbase.github.io/#",
+    "githubRepo": "https://andsta91.github.io/solutionbase.github.io/#",
+    "features": [
+      "test"
+    ],
+    "components": [
+      {
+        "type": "Unknown",
+        "name": "test",
+        "description": ""
+      }
+    ],
+    "prerequisites": [
+      "test"
+    ],
+    "issueRef": 19
   }
 ]
